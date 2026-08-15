@@ -59,7 +59,8 @@ jobs:
           print(f"sdist: {sd}")
           with tarfile.open(sd) as t:
               names = t.getnames()
-          m = re.search(r"py_attributedict-([^/]+)/", names[0])
+          # First entry is the sdist root dir, e.g. py_attributedict-0.2.0
+          m = re.match(r"py_attributedict-([^/]+)", names[0])
           assert m, names[:5]
           print(f"version from tag: {m.group(1)}")
           EOF
