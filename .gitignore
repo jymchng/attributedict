@@ -25,6 +25,13 @@ htmlcov/
 hypothesis/
 .benchmarks/
 
+# C coverage (gcov/lcov)
+*.gcda
+*.gcno
+*.gcov
+coverage.info
+lcov/
+
 # Type checking
 .mypy_cache/
 .pytype/

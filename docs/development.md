@@ -175,3 +175,34 @@ GitHub Actions workflows (all least-privilege, SEC-004):
   creates a GitHub Release (draft). No PyPI auto-publish (PKG-008, SEC-006).
 
 Sanitizer and lint jobs gate merges; wheels validate artifacts.
+
+## C-extension coverage (I-021)
+
+The C extension `_attributedict.c` is measured with gcov:
+
+```bash
+# clean instrumented build (IMPORTANT: remove stale .so first)
+rm -f src/attributedict/*.so
+CFLAGS="-O0 --coverage -fno-omit-frame-pointer" LDFLAGS="--coverage" \
+  python setup.py build_ext --inplace
+
+# run the suite, then generate coverage
+python -m pytest tests/ -q
+gcov -o build/temp.linux-x86_64-cpython-313/src/attributedict/ \
+  src/attributedict/_attributedict.c   # -> _attributedict.c.gcov
+```
+
+**Measured: 74.29% line coverage of 210 executable lines** (2026-08-15,
+CPython 3.13, linux x86_64). CI gates this at **>= 70%**
+(`.github/workflows/coverage.yml`).
+
+The uncovered ~26% is dominated by **OOM/defensive error paths** that are
+not practically testable: allocation-failure `return NULL`/`return -1`
+branches in conversion, copy, reduce, repr, and module init, plus the
+`PyErr_Occurred()` guard in `tp_getattro` (unreachable for str keys) and
+"key vanished" race guards. These are intentional (MEM-004 discipline);
+a regression below 70% fails CI.
+
+**Lesson learned:** an interrupted `coverage.py`/instrumented build can leave
+a corrupt `.so` that segfaults — always remove stale `.so` files before a
+coverage rebuild (the CI job does this).
