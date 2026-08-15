@@ -1,70 +1,118 @@
-# attributedict
+<p align="center">
+  <a href="https://github.com/jymchng/attributedict">
+    <img src="docs/assets/logo.png" alt="attributedict" width="120">
+  </a>
+</p>
 
-[![CI](https://github.com/jymchng/attributedict/actions/workflows/tests.yml/badge.svg)](https://github.com/jymchng/attributedict/actions/workflows/tests.yml)
-[![Lint](https://github.com/jymchng/attributedict/actions/workflows/lint.yml/badge.svg)](https://github.com/jymchng/attributedict/actions/workflows/lint.yml)
-[![Wheels](https://github.com/jymchng/attributedict/actions/workflows/wheels.yml/badge.svg)](https://github.com/jymchng/attributedict/actions/workflows/wheels.yml)
-[![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](docs/installation.md)
-[![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)](docs/compatibility.md)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+<h1 align="center">attributedict</h1>
 
-A production-quality **CPython C extension** implementing an `AttributeDict`:
-a `dict` subclass whose keys are also accessible through attribute syntax
-(`d["host"] == d.host`).
+<p align="center">
+  <b>dict semantics with attribute access.</b><br>
+  A production-quality <b>CPython C extension</b> implementing an <code>AttributeDict</code> —
+  a <code>dict</code> subclass whose keys are also accessible through attribute syntax.
+</p>
+
+<p align="center">
+  <a href="https://github.com/jymchng/attributedict/actions/workflows/tests.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/tests.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/jymchng/attributedict/actions/workflows/lint.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/lint.yml/badge.svg" alt="Lint"></a>
+  <a href="https://github.com/jymchng/attributedict/actions/workflows/wheels.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/wheels.yml/badge.svg" alt="Wheels"></a>
+  <a href="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue"><img src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg" alt="Python 3.9–3.14"></a>
+  <a href="https://img.shields.io/badge/coverage-92%25-brightgreen"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen.svg" alt="Coverage 92%"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
+</p>
+
+---
+
+**Documentation:** <https://jymchng.github.io/attributedict/>
+
+---
+
+## Example
 
 ```python
 from attributedict import AttributeDict
 
 config = AttributeDict(host="localhost", port=8080)
-assert config["host"] == "localhost"
-assert config.host == "localhost"
 
-config.debug = True
-assert config["debug"] is True
+config["host"]       # "localhost"
+config.host          # "localhost" — attribute access, same data
+
+config.debug = True  # stores config["debug"] = True
+config["debug"]      # True
+```
+
+Nested mappings become `AttributeDict` automatically:
+
+```python
+settings = AttributeDict({
+    "database": {"host": "localhost", "ports": [5432, {"tls": True}]},
+})
+
+settings.database.host          # "localhost"
+settings.database.ports[1].tls  # True
 ```
 
 ## Features
 
-- **Genuine C extension** — a C subclass of `dict` with custom
+- ✅ **Genuine C extension** — a C subclass of `dict` with custom
   `tp_getattro`/`tp_setattro`; `isinstance(d, dict)` is `True`.
-- **Type attributes win on the attribute path** — `d.items` reads the real
+- ✅ **Type attributes win on the attribute path** — `d.items` reads the real
   `dict` method even when a key `"items"` exists; `d["items"]` keeps the
-  key's value (FR-006, I-024).
-- **Recursive nested conversion** at construction, cycle-safe: nested dicts
-  (and dicts inside lists/tuples) become `AttributeDict` (FR-007).
-- **Full dict compatibility** — mapping protocol, dict methods, views,
-  `MutableMapping`; `copy()`/`fromkeys` return `AttributeDict` (FR-008/009).
-- **repr/equality/unhashable** — `AttributeDict({...})`, dict semantics,
-  unhashable like dict (FR-010/011/012).
-- **Copy / pickle** — `copy.copy`, `copy.deepcopy`, `pickle` across all
-  protocols (0–5), cycles preserved (FR-013).
-- **Stable ABI** — `cp39-abi3` wheels cover CPython **3.9–3.14**.
-- **Zero runtime dependencies.**
+  key's value (I-024).
+- ✅ **Recursive nested conversion** — cycle-safe at construction; dicts inside
+  lists/tuples become `AttributeDict`.
+- ✅ **Full dict compatibility** — mapping protocol, dict methods, views,
+  `MutableMapping`; `copy()`/`fromkeys` return `AttributeDict`.
+- ✅ **Copy & pickle** — `copy.copy`, `copy.deepcopy`, and `pickle` across all
+  protocols (0–5), cycles preserved.
+- ✅ **Stable ABI** — `cp39-abi3` wheels cover CPython **3.9–3.14**.
+- ✅ **Zero runtime dependencies.**
+
+## Requirements
+
+- **CPython 3.9 – 3.14** (Linux, macOS, Windows).
+- PyPy and free-threaded CPython 3.13t are **not** supported in v1.
 
 ## Installation
 
 ```bash
-pip install attributedict          # wheels / sdist
+pip install py-attributedict
 ```
 
-Requires CPython 3.9–3.14. PyPy and free-threaded 3.13t are not supported
-in v1. See [docs/installation.md](docs/installation.md).
+This installs the `cp39-abi3` wheel for your platform (or builds from source).
+The import name is `attributedict` (the distribution is published as
+`py-attributedict` because the plain names `attributedict` / `attrdict` are
+taken on PyPI by unrelated projects).
+
+## Key highlights
+
+- **It's a real dict.** `isinstance(config, dict)`, `dict(config)`, views,
+  and all `dict` methods just work.
+- **Attribute access mirrors mapping access.** `config.host` and
+  `config["host"]` read the same value; assignment and deletion work too.
+- **Nested data, attribute style.** `settings.database.host` instead of
+  `settings["database"]["host"]`.
+- **Predictable collisions.** Keys never shadow methods on the attribute
+  path: `d.items` is the method, `d["items"]` is the key's value.
 
 ## Documentation
 
+Full documentation is published at
+**[https://jymchng.github.io/attributedict/](https://jymchng.github.io/attributedict/)**
+(MkDocs + Material).
+
 | Topic | Doc |
 |---|---|
+| Installation | [docs/installation.md](docs/installation.md) |
 | Quickstart | [docs/quickstart.md](docs/quickstart.md) |
 | API reference | [docs/api.md](docs/api.md) |
-| Attribute semantics (keys win) | [docs/attribute-semantics.md](docs/attribute-semantics.md) |
+| Attribute semantics | [docs/attribute-semantics.md](docs/attribute-semantics.md) |
 | Mapping semantics | [docs/mapping-semantics.md](docs/mapping-semantics.md) |
 | Nested conversion | [docs/nested.md](docs/nested.md) |
 | Serialization | [docs/serialization.md](docs/serialization.md) |
 | Errors | [docs/errors.md](docs/errors.md) |
 | FAQ | [docs/faq.md](docs/faq.md) |
-| Architecture (C) | [docs/architecture.md](docs/architecture.md) |
-| Development | [docs/development.md](docs/development.md) |
 | Performance | [docs/performance.md](docs/performance.md) |
-| Packaging | [docs/packaging.md](docs/packaging.md) |
 | Release | [docs/release.md](docs/release.md) |
 
 ## Development

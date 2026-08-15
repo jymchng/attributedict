@@ -8,8 +8,12 @@
 ## From PyPI (when published)
 
 ```bash
-pip install attributedict
+pip install py-attributedict
 ```
+
+The import name is `attributedict`; the distribution is published as
+`py-attributedict` (the plain names `attributedict` / `attrdict` are taken on
+PyPI by unrelated projects).
 
 ## From source
 

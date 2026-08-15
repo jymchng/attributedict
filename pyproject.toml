@@ -1,16 +1,16 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=68", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "attributedict"
-version = "0.1.0"
+name = "py-attributedict"
+dynamic = ["version"]
 description = "AttributeDict: a CPython C extension dict subclass with attribute access (d['host'] == d.host)"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Jim Chng", email = "jimchng@hotmail.com" }]
-keywords = ["attributedict", "dict", "attribute", "mapping", "c-extension"]
+keywords = ["attributedict", "attrdict", "dict", "attribute", "mapping", "c-extension"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -30,6 +30,14 @@ dependencies = []
 
 [project.urls]
 Repository = "https://github.com/jymchng/attributedict"
+
+# --- Dynamic versioning (D-005): version is derived from git tags via
+# setuptools-scm (like hatch-vcs in sibling projects). Tags are of the form
+# v0.1.0 -> 0.1.0. Without any tag, the fallback below applies.
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
+fallback_version = "0.1.0.dev0"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -76,15 +84,19 @@ fail_under = 80
 show_missing = true
 
 # --- cibuildwheel (I-015, PKG-006): abi3 wheels per platform ---
+# Build with CPython 3.9; setup.py tags the produced wheel cp39-abi3, which
+# is compatible with CPython 3.9+ (one wheel per platform). cibuildwheel 4.x
+# does not accept "abi3" as part of a build selector (identifiers are
+# <cpXY>-<platform>), so target cp39-* directly.
 [tool.cibuildwheel]
-build = "cp39-abi3-*"
-archs = ["x86_64", "aarch64", "arm64", "auto64"]
+build = "cp39-*"
+archs = ["x86_64", "aarch64", "i686", "ppc64le", "s390x", "armv7l"]
 
 [tool.cibuildwheel.macos]
 archs = ["arm64", "x86_64"]
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64"]
+archs = ["x86_64", "aarch64", "i686", "ppc64le", "s390x", "armv7l"]
 
 [tool.cibuildwheel.windows]
-archs = ["x86_64"]
+archs = ["AMD64", "ARM64", "x86"]
