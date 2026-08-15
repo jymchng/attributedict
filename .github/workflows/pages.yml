@@ -60,7 +60,7 @@ jobs:
         if: steps.pages-check.outputs.status == '200'
         uses: actions/deploy-pages@v5
 
-      - name: Notice: Pages not enabled yet
+      - name: "Notice: Pages not enabled yet"
         if: steps.pages-check.outputs.status != '200'
         run: |
           echo "::warning::GitHub Pages is not enabled for this repository yet. Enable it (Settings > Pages > Source: GitHub Actions) to activate the docs site."
