@@ -77,6 +77,63 @@ AttributeDict_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return type->tp_base->tp_new(type, args, kwds);
 }
 
+/* Attribute get (FR-003 / FR-006: keys win).
+ *
+ * Resolution order (spec 05):
+ *   1. If the name is a str that is a valid identifier AND a mapping key,
+ *      return the key's value (keys win over type attributes/methods).
+ *   2. Otherwise fall back to PyObject_GenericGetAttr (type attributes,
+ *      descriptors, methods, dunders).
+ *   3. If that raises AttributeError, propagate it.
+ *
+ * Non-identifier keys are NOT reachable via attribute syntax (FR-014).
+ */
+static PyObject *
+AttributeDict_getattro(AttributeDictObject *self, PyObject *name)
+{
+    if (PyUnicode_Check(name) && PyUnicode_IsIdentifier(name)) {
+        PyObject *value = PyDict_GetItemWithError((PyObject *)self, name);
+        if (value != NULL) {
+            Py_INCREF(value);
+            return value;
+        }
+        if (PyErr_Occurred()) {
+            /* e.g. unhashable name -- propagate (MEM-004) */
+            return NULL;
+        }
+        /* Key absent: fall through to generic lookup. */
+    }
+    return PyObject_GenericGetAttr((PyObject *)self, name);
+}
+
+/* Attribute set/delete (FR-004/005).
+ *
+ *   d.name = v   ->  d["name"] = v           (always mapping assignment)
+ *   del d.name   ->  delete key "name"; AttributeError if absent
+ *
+ * The AttributeError on delete of a missing key is a documented deviation
+ * from the mapping form (del d["missing"] -> KeyError) per spec 08.
+ */
+static int
+AttributeDict_setattro(AttributeDictObject *self, PyObject *name,
+                       PyObject *value)
+{
+    if (value != NULL) {
+        return PyDict_SetItem((PyObject *)self, name, value);
+    }
+    /* value == NULL means attribute deletion. */
+    if (PyDict_DelItem((PyObject *)self, name) < 0) {
+        if (PyErr_ExceptionMatches(PyExc_KeyError)) {
+            PyErr_Clear();  /* intentional: surface as AttributeError (MEM-004) */
+            PyErr_Format(PyExc_AttributeError,
+                         "%R object has no attribute %R",
+                         Py_TYPE(self), name);
+        }
+        return -1;
+    }
+    return 0;
+}
+
 /* Repr placeholder until I-009: use dict's repr semantics by delegating to
  * the base tp_repr via the generic path. (Overridden in I-009.) */
 
@@ -93,6 +150,8 @@ static PyTypeObject AttributeDict_Type = {
     .tp_doc = attributedict_doc,
     .tp_traverse = (traverseproc)AttributeDict_traverse,
     .tp_clear = (inquiry)AttributeDict_clear,
+    .tp_getattro = (getattrofunc)AttributeDict_getattro,
+    .tp_setattro = (setattrofunc)AttributeDict_setattro,
     .tp_new = AttributeDict_new,
 };
 
