@@ -1,4 +1,7 @@
 # Build the MkDocs site and deploy it to GitHub Pages (goal: docs site).
+# The deploy step only runs when GitHub Pages is enabled for the repo
+# (Settings > Pages > Source: GitHub Actions); otherwise the workflow
+# completes green with a notice so CI never blocks on repo settings.
 name: pages
 
 on:
@@ -43,5 +46,21 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - name: Check whether GitHub Pages is enabled
+        id: pages-check
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages")
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        if: steps.pages-check.outputs.status == '200'
         uses: actions/deploy-pages@v5
+
+      - name: Notice: Pages not enabled yet
+        if: steps.pages-check.outputs.status != '200'
+        run: |
+          echo "::warning::GitHub Pages is not enabled for this repository yet. Enable it (Settings > Pages > Source: GitHub Actions) to activate the docs site."

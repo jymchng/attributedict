@@ -4,7 +4,7 @@
 # PY_ATTRIBUTEDICT_TESTING macro (so the deterministic allocation-failure
 # tests in tests/test_failinject.py can run), executes the full suite,
 # generates line coverage with gcov, and gates on > 90% line coverage for
-# _attributedict.c. Measured: 92.34% of 209 lines (2026-08-15).
+# _attributedict.c. Measured: 92.17% of 217 lines (2026-08-15).
 # The test-only macro is never defined in production wheels.
 
 name: coverage
@@ -42,21 +42,32 @@ jobs:
           python setup.py build_ext --inplace
 
       - name: Run test suite against instrumented build
+        env:
+          # The extension is built inplace under src/; tests import the
+          # package from the source tree (the repo uses a src/ layout).
+          PYTHONPATH: src
         run: python -m pytest tests/ -q
 
       - name: Generate gcov line coverage
         run: |
-          gcov -o build/temp.linux-x86_64-cpython-313/src/attributedict/ \
-            src/attributedict/_attributedict.c
+          objdir=$(find build -name '_attributedict.gcno' -printf '%h\n' | head -1)
+          gcov -o "$objdir" src/attributedict/_attributedict.c 2>&1 | tee gcov_report.txt
 
       - name: Check C line-coverage threshold (> 90%)
         run: |
           python - <<'EOF'
           import re, pathlib
-          text = pathlib.Path("_attributedict.c.gcov").read_text()
-          m = re.search(r"Lines executed:([0-9.]+)% of ([0-9]+)", text)
+          text = pathlib.Path("gcov_report.txt").read_text()
+          # gcov prints the per-file summary to stdout (modern gcc does not
+          # embed it in the .gcov file), e.g.:
+          #   File 'src/attributedict/_attributedict.c'
+          #   Lines executed:92.17% of 217
+          m = re.search(
+              r"File 'src/attributedict/_attributedict\.c'\s*\n\s*Lines executed:([0-9.]+)% of ([0-9]+)",
+              text,
+          )
           if not m:
-              raise SystemExit("gcov summary not found")
+              raise SystemExit("gcov summary for _attributedict.c not found")
           pct = float(m.group(1)); total = int(m.group(2))
           print(f"_attributedict.c line coverage: {pct}% of {total} lines")
           if pct <= 90.0:
