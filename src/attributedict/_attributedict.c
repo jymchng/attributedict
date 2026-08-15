@@ -391,9 +391,59 @@ PyDoc_STRVAR(attributedict_copy_doc,
 "\n"
 "Return a shallow copy of the mapping as an AttributeDict.");
 
+/* __reduce__ (FR-013): enable pickle across all protocols, cycle-safe.
+ *
+ * Use the 5-tuple form (reconstructor, args, state, listitems, dictitems):
+ * returning iter(self.items()) as the dictitems lets pickle serialize items
+ * lazily through its memo, so self-referential structures reduce without
+ * recursion (mirrors CPython dict.__reduce_ex__).
+ */
+static PyObject *
+AttributeDict_reduce(AttributeDictObject *self, PyObject *Py_UNUSED(ignored))
+{
+    PyObject *module = PyImport_ImportModule("attributedict._pickle_support");
+    if (module == NULL) {
+        return NULL;
+    }
+    PyObject *func = PyObject_GetAttrString(module, "reconstruct");
+    Py_DECREF(module);
+    if (func == NULL) {
+        return NULL;
+    }
+
+    PyObject *args = Py_BuildValue("(O)", (PyObject *)Py_TYPE(self));
+    if (args == NULL) {
+        Py_DECREF(func);
+        return NULL;
+    }
+
+    PyObject *items_iter = PyObject_GetIter(PyDict_Items((PyObject *)self));
+    if (items_iter == NULL) {
+        Py_DECREF(func);
+        Py_DECREF(args);
+        return NULL;
+    }
+
+    PyObject *tuple = Py_BuildValue("(OOOOO)",
+                                    func,     /* callable */
+                                    args,     /* args */
+                                    Py_None,  /* state */
+                                    Py_None,  /* listitems */
+                                    items_iter /* dictitems */);
+    Py_DECREF(func);
+    Py_DECREF(args);
+    Py_DECREF(items_iter);
+    return tuple;
+}
+
+PyDoc_STRVAR(attributedict_reduce_doc,
+"__reduce__() -- pickle support (preserves type and cycles).");
+
 static PyMethodDef AttributeDict_methods[] = {
     {"copy", (PyCFunction)AttributeDict_copy, METH_NOARGS,
      attributedict_copy_doc},
+    {"__reduce__", (PyCFunction)AttributeDict_reduce, METH_NOARGS,
+     attributedict_reduce_doc},
     {NULL, NULL, 0, NULL},
 };
 
