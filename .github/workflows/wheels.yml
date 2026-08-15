@@ -144,14 +144,7 @@ jobs:
             esac
             python -m venv /tmp/whl-venv
             /tmp/whl-venv/bin/pip install -q "$whl"
-            /tmp/whl-venv/bin/python -c "
-              from attributedict import AttributeDict
-              import attributedict
-              d = AttributeDict(host='x', nested={'a': [1, {'b': 2}]})
-              assert d.host == 'x' and d.nested.a[1].b == 2
-              assert isinstance(d.nested, AttributeDict)
-              assert attributedict.__version__
-            "
+            /tmp/whl-venv/bin/python scripts/smoke_wheel.py
             rm -rf /tmp/whl-venv
             installed=$((installed+1))
             echo "OK: $whl"
