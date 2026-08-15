@@ -63,6 +63,9 @@ set_allocation_fail_count(PyObject *Py_UNUSED(self), PyObject *arg)
     g_alloc_fail_count = n;
     Py_RETURN_NONE;
 }
+#else   /* !PY_ATTRIBUTEDICT_TESTING: production builds inject nothing. */
+#define ALLOC_FAIL() (0)
+#define AD_ALLOC(expr) (expr)
 #endif  /* PY_ATTRIBUTEDICT_TESTING */
 
 /* Forward declaration (the type is defined near the end of the file but the
