@@ -140,9 +140,11 @@ jobs:
           installed=0
           for whl in dist/*.whl; do
             # Only Linux x86_64 wheels are installable on this runner.
+            # Only glibc manylinux x86_64 wheels install on this ubuntu runner
+            # (musllinux needs musl; macosx/win are non-Linux).
             case "$whl" in
-              *macosx*|*win_amd64*|*win32*|*win_arm64*)
-                echo "SKIPPED (non-Linux): $whl"
+              *musllinux*|*macosx*|*win_amd64*|*win32*|*win_arm64*)
+                echo "SKIPPED (not glibc/Linux): $whl"
                 continue
                 ;;
               *x86_64*.whl)
