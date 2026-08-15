@@ -152,39 +152,25 @@ AttributeDict_ConvertValue(PyObject *value, PyObject *ctx)
             return NULL;
         }
 
-        PyObject *keys = PyDict_Keys(value);
-        if (keys == NULL) {
-            Py_DECREF(nd);
-            return NULL;
-        }
-        Py_ssize_t n = PyList_GET_SIZE(keys);
-        for (Py_ssize_t i = 0; i < n; i++) {
-            PyObject *k = PyList_GET_ITEM(keys, i);
-            PyObject *v = PyDict_GetItemWithError(value, k);
-            if (v == NULL) {
-                if (!PyErr_Occurred()) {
-                    PyErr_SetString(PyExc_RuntimeError,
-                                    "key vanished during conversion");
-                }
-                Py_DECREF(keys);
-                Py_DECREF(nd);
-                return NULL;
-            }
+        /* Iterate key/value pairs directly (PyDict_Next): keys are already
+         * hashed in the source dict, so no per-item error is possible and no
+         * "key vanished" race guard is needed. Conversion writes only into
+         * *nd* (never mutating the source), so iteration stays valid. */
+        Py_ssize_t pos = 0;
+        PyObject *k, *v;
+        while (PyDict_Next(value, &pos, &k, &v)) {
             PyObject *cv = AttributeDict_ConvertValue(v, ctx);
             if (cv == NULL) {
-                Py_DECREF(keys);
                 Py_DECREF(nd);
                 return NULL;
             }
             int rc = PyDict_SetItem(nd, k, cv);
             Py_DECREF(cv);
             if (rc < 0) {
-                Py_DECREF(keys);
                 Py_DECREF(nd);
                 return NULL;
             }
         }
-        Py_DECREF(keys);
         return nd;
     }
 
@@ -276,42 +262,25 @@ AttributeDict_init(AttributeDictObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    /* Convert each value in place. Iterate over a snapshot of keys because
-     * conversion may (in the cycle case) insert into nested objects only,
-     * not into self; the snapshot guards against any reentrancy anyway. */
-    PyObject *keys = PyDict_Keys((PyObject *)self);
-    if (keys == NULL) {
-        Py_DECREF(ctx);
-        return -1;
-    }
-    Py_ssize_t n = PyList_GET_SIZE(keys);
-    for (Py_ssize_t i = 0; i < n; i++) {
-        PyObject *k = PyList_GET_ITEM(keys, i);
-        PyObject *v = PyDict_GetItemWithError((PyObject *)self, k);
-        if (v == NULL) {
-            if (!PyErr_Occurred()) {
-                PyErr_SetString(PyExc_RuntimeError,
-                                "key vanished during construction");
-            }
-            Py_DECREF(keys);
-            Py_DECREF(ctx);
-            return -1;
-        }
+    /* Convert each value in place. Iterate key/value pairs directly: only
+     * the value slot of an existing key changes (PyDict_SetItem on an
+     * already-present key never resizes/reorders), so PyDict_Next stays
+     * valid and no "key vanished" guard is needed. */
+    Py_ssize_t pos = 0;
+    PyObject *k, *v;
+    while (PyDict_Next((PyObject *)self, &pos, &k, &v)) {
         PyObject *cv = AttributeDict_ConvertValue(v, ctx);
         if (cv == NULL) {
-            Py_DECREF(keys);
             Py_DECREF(ctx);
             return -1;
         }
         int rc = PyDict_SetItem((PyObject *)self, k, cv);
         Py_DECREF(cv);
         if (rc < 0) {
-            Py_DECREF(keys);
             Py_DECREF(ctx);
             return -1;
         }
     }
-    Py_DECREF(keys);
     Py_DECREF(ctx);
     return 0;
 }
@@ -335,16 +304,13 @@ static PyObject *
 AttributeDict_getattro(AttributeDictObject *self, PyObject *name)
 {
     if (PyUnicode_Check(name) && PyUnicode_IsIdentifier(name)) {
-        PyObject *value = PyDict_GetItemWithError((PyObject *)self, name);
+        /* A str key is always hashable, so PyDict_GetItem cannot raise:
+         * NULL unambiguously means "key absent" -> fall through. */
+        PyObject *value = PyDict_GetItem((PyObject *)self, name);
         if (value != NULL) {
             Py_INCREF(value);
             return value;
         }
-        if (PyErr_Occurred()) {
-            /* e.g. unhashable name -- propagate (MEM-004) */
-            return NULL;
-        }
-        /* Key absent: fall through to generic lookup. */
     }
     return PyObject_GenericGetAttr((PyObject *)self, name);
 }
@@ -467,38 +433,21 @@ AttributeDict_repr(AttributeDictObject *self)
         return PyUnicode_FromString("AttributeDict({...})");
     }
 
-    PyObject *keys = PyDict_Keys((PyObject *)self);
-    if (keys == NULL) {
-        Py_ReprLeave((PyObject *)self);
-        return NULL;
-    }
-    Py_ssize_t n = PyList_GET_SIZE(keys);
-
-    PyObject *parts = PyList_New(n);
+    PyObject *parts = PyList_New(0);
     if (parts == NULL) {
-        Py_DECREF(keys);
         Py_ReprLeave((PyObject *)self);
         return NULL;
     }
 
-    for (Py_ssize_t i = 0; i < n; i++) {
-        PyObject *k = PyList_GET_ITEM(keys, i);
-        PyObject *v = PyDict_GetItemWithError((PyObject *)self, k);
-        if (v == NULL) {
-            if (!PyErr_Occurred()) {
-                PyErr_SetString(PyExc_RuntimeError, "key vanished during repr");
-            }
-            Py_DECREF(keys);
-            Py_DECREF(parts);
-            Py_ReprLeave((PyObject *)self);
-            return NULL;
-        }
+    /* Iterate key/value pairs directly; no per-item error possible. */
+    Py_ssize_t pos = 0;
+    PyObject *k, *v;
+    while (PyDict_Next((PyObject *)self, &pos, &k, &v)) {
         PyObject *kr = PyObject_Repr(k);
         PyObject *vr = PyObject_Repr(v);
         if (kr == NULL || vr == NULL) {
             Py_XDECREF(kr);
             Py_XDECREF(vr);
-            Py_DECREF(keys);
             Py_DECREF(parts);
             Py_ReprLeave((PyObject *)self);
             return NULL;
@@ -507,14 +456,18 @@ AttributeDict_repr(AttributeDictObject *self)
         Py_DECREF(kr);
         Py_DECREF(vr);
         if (item == NULL) {
-            Py_DECREF(keys);
             Py_DECREF(parts);
             Py_ReprLeave((PyObject *)self);
             return NULL;
         }
-        PyList_SET_ITEM(parts, i, item);  /* steals */
+        if (PyList_Append(parts, item) < 0) {
+            Py_DECREF(item);
+            Py_DECREF(parts);
+            Py_ReprLeave((PyObject *)self);
+            return NULL;
+        }
+        Py_DECREF(item);
     }
-    Py_DECREF(keys);
 
     PyObject *sep = PyUnicode_FromString(", ");
     if (sep == NULL) {
