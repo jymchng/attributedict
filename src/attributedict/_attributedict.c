@@ -19,6 +19,52 @@
 #include <Python.h>
 #include <dictobject.h>
 
+#ifdef PY_ATTRIBUTEDICT_TESTING
+/* Test-only allocation-failure injection (I-023).
+ *
+ * Compiled in ONLY when the build defines PY_ATTRIBUTEDICT_TESTING (test
+ * builds). Production wheels never define it, so no fault-injection code is
+ * shipped. Mirrors CPython's own _testcapi.set_nomemory approach: setting a
+ * non-negative count makes the next N allocation helper calls fail with
+ * PyErr_NoMemory so every OOM branch in this file is deterministically
+ * coverable by tests.
+ */
+static Py_ssize_t g_alloc_fail_count = -1;
+
+static int
+TestMallocFail(void)
+{
+    if (g_alloc_fail_count < 0) {
+        return 0;
+    }
+    if (g_alloc_fail_count == 0) {
+        PyErr_NoMemory();
+        return 1;
+    }
+    g_alloc_fail_count--;
+    return 0;
+}
+
+/* set_allocation_fail_count(n): n<0 disables; n>=0 lets n allocations
+ * succeed then fails the (n+1)-th (so n=0 fails the first allocation). */
+/* Returns 1 (with MemoryError set) if the injected failure fires. */
+#define ALLOC_FAIL() (TestMallocFail())
+
+/* Wraps an allocation so the injected failure can fire at every site. */
+#define AD_ALLOC(expr) (ALLOC_FAIL() ? NULL : (expr))
+
+static PyObject *
+set_allocation_fail_count(PyObject *Py_UNUSED(self), PyObject *arg)
+{
+    Py_ssize_t n = PyLong_AsSsize_t(arg);
+    if (n == -1 && PyErr_Occurred()) {
+        return NULL;
+    }
+    g_alloc_fail_count = n;
+    Py_RETURN_NONE;
+}
+#endif  /* PY_ATTRIBUTEDICT_TESTING */
+
 /* Forward declaration (the type is defined near the end of the file but the
  * conversion helpers reference it). */
 static PyTypeObject AttributeDict_Type;
@@ -38,7 +84,7 @@ typedef struct {
 static int
 AttributeDict_traverse(AttributeDictObject *self, visitproc visit, void *arg)
 {
-    PyObject *items = PyDict_Items((PyObject *)self);
+    PyObject *items = AD_ALLOC(PyDict_Items((PyObject *)self));
     if (items == NULL) {
         return -1;
     }
@@ -79,7 +125,7 @@ AttributeDict_dealloc(AttributeDictObject *self)
 static int
 AttributeDict_ctx_put(PyObject *ctx, PyObject *obj, PyObject *converted)
 {
-    PyObject *key = PyLong_FromVoidPtr(obj);
+    PyObject *key = AD_ALLOC(PyLong_FromVoidPtr(obj));
     if (key == NULL) {
         return -1;
     }
@@ -107,7 +153,7 @@ AttributeDict_ctx_get(PyObject *ctx, PyObject *obj)
 static PyObject *
 AttributeDict_NewEmpty(void)
 {
-    PyObject *args = PyTuple_New(0);
+    PyObject *args = AD_ALLOC(PyTuple_New(0));
     if (args == NULL) {
         return NULL;
     }
@@ -126,6 +172,11 @@ AttributeDict_NewEmpty(void)
 static PyObject *
 AttributeDict_ConvertValue(PyObject *value, PyObject *ctx)
 {
+#ifdef PY_ATTRIBUTEDICT_TESTING
+    if (ALLOC_FAIL()) {
+        return NULL;
+    }
+#endif
     if (PyObject_TypeCheck(value, &AttributeDict_Type)) {
         /* Already converted: share it (idempotent; shallow-copy semantics). */
         Py_INCREF(value);
@@ -148,8 +199,7 @@ AttributeDict_ConvertValue(PyObject *value, PyObject *ctx)
         }
         /* Register BEFORE filling so cycles resolve to *nd*. */
         if (AttributeDict_ctx_put(ctx, value, nd) < 0) {
-            Py_DECREF(nd);
-            return NULL;
+            goto fail;
         }
 
         /* Iterate key/value pairs directly (PyDict_Next): keys are already
@@ -161,22 +211,24 @@ AttributeDict_ConvertValue(PyObject *value, PyObject *ctx)
         while (PyDict_Next(value, &pos, &k, &v)) {
             PyObject *cv = AttributeDict_ConvertValue(v, ctx);
             if (cv == NULL) {
-                Py_DECREF(nd);
-                return NULL;
+                goto fail;
             }
             int rc = PyDict_SetItem(nd, k, cv);
             Py_DECREF(cv);
             if (rc < 0) {
-                Py_DECREF(nd);
-                return NULL;
+                goto fail;
             }
         }
         return nd;
+
+fail:
+        Py_DECREF(nd);
+        return NULL;
     }
 
     if (PyList_Check(value)) {
         Py_ssize_t n = PyList_GET_SIZE(value);
-        PyObject *nl = PyList_New(n);
+        PyObject *nl = AD_ALLOC(PyList_New(n));
         if (nl == NULL) {
             return NULL;
         }
@@ -193,7 +245,7 @@ AttributeDict_ConvertValue(PyObject *value, PyObject *ctx)
 
     if (PyTuple_Check(value)) {
         Py_ssize_t n = PyTuple_GET_SIZE(value);
-        PyObject *nt = PyTuple_New(n);
+        PyObject *nt = AD_ALLOC(PyTuple_New(n));
         if (nt == NULL) {
             return NULL;
         }
@@ -245,7 +297,7 @@ AttributeDict_init(AttributeDictObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    PyObject *ctx = PyDict_New();
+    PyObject *ctx = AD_ALLOC(PyDict_New());
     if (ctx == NULL) {
         return -1;
     }
@@ -271,18 +323,20 @@ AttributeDict_init(AttributeDictObject *self, PyObject *args, PyObject *kwds)
     while (PyDict_Next((PyObject *)self, &pos, &k, &v)) {
         PyObject *cv = AttributeDict_ConvertValue(v, ctx);
         if (cv == NULL) {
-            Py_DECREF(ctx);
-            return -1;
+            goto fail;
         }
         int rc = PyDict_SetItem((PyObject *)self, k, cv);
         Py_DECREF(cv);
         if (rc < 0) {
-            Py_DECREF(ctx);
-            return -1;
+            goto fail;
         }
     }
     Py_DECREF(ctx);
     return 0;
+
+fail:
+    Py_DECREF(ctx);
+    return -1;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -374,35 +428,40 @@ PyDoc_STRVAR(attributedict_copy_doc,
 static PyObject *
 AttributeDict_reduce(AttributeDictObject *self, PyObject *Py_UNUSED(ignored))
 {
-    PyObject *module = PyImport_ImportModule("attributedict._pickle_support");
+#ifdef PY_ATTRIBUTEDICT_TESTING
+    if (ALLOC_FAIL()) {
+        return NULL;
+    }
+#endif
+    PyObject *module = AD_ALLOC(PyImport_ImportModule("attributedict._pickle_support"));
     if (module == NULL) {
         return NULL;
     }
-    PyObject *func = PyObject_GetAttrString(module, "reconstruct");
+    PyObject *func = AD_ALLOC(PyObject_GetAttrString(module, "reconstruct"));
     Py_DECREF(module);
     if (func == NULL) {
         return NULL;
     }
 
-    PyObject *args = Py_BuildValue("(O)", (PyObject *)Py_TYPE(self));
+    PyObject *args = AD_ALLOC(Py_BuildValue("(O)", (PyObject *)Py_TYPE(self)));
     if (args == NULL) {
         Py_DECREF(func);
         return NULL;
     }
 
-    PyObject *items_iter = PyObject_GetIter(PyDict_Items((PyObject *)self));
+    PyObject *items_iter = AD_ALLOC(PyObject_GetIter(PyDict_Items((PyObject *)self)));
     if (items_iter == NULL) {
         Py_DECREF(func);
         Py_DECREF(args);
         return NULL;
     }
 
-    PyObject *tuple = Py_BuildValue("(OOOOO)",
+    PyObject *tuple = AD_ALLOC(Py_BuildValue("(OOOOO)",
                                     func,     /* callable */
                                     args,     /* args */
                                     Py_None,  /* state */
                                     Py_None,  /* listitems */
-                                    items_iter /* dictitems */);
+                                    items_iter /* dictitems */));
     Py_DECREF(func);
     Py_DECREF(args);
     Py_DECREF(items_iter);
@@ -428,12 +487,26 @@ static PyMethodDef AttributeDict_methods[] = {
 static PyObject *
 AttributeDict_repr(AttributeDictObject *self)
 {
+#ifdef PY_ATTRIBUTEDICT_TESTING
+    if (ALLOC_FAIL()) {
+        return NULL;
+    }
+#endif
     if (Py_ReprEnter((PyObject *)self) != 0) {
-        /* Already in progress: recursive reference -> "...". */
+        /* != 0 means recursion detected (1) or error (-1):
+         * recursion -> render "..."; error -> propagate.
+         * In BOTH cases Py_ReprLeave must NOT be called (nothing entered,
+         * or the recursion guard is already held by an outer frame).
+         * On injected/OOM failure of the literal, return NULL directly. */
+#ifdef PY_ATTRIBUTEDICT_TESTING
+        if (ALLOC_FAIL()) {
+            return NULL;
+        }
+#endif
         return PyUnicode_FromString("AttributeDict({...})");
     }
 
-    PyObject *parts = PyList_New(0);
+    PyObject *parts = AD_ALLOC(PyList_New(0));
     if (parts == NULL) {
         Py_ReprLeave((PyObject *)self);
         return NULL;
@@ -443,8 +516,8 @@ AttributeDict_repr(AttributeDictObject *self)
     Py_ssize_t pos = 0;
     PyObject *k, *v;
     while (PyDict_Next((PyObject *)self, &pos, &k, &v)) {
-        PyObject *kr = PyObject_Repr(k);
-        PyObject *vr = PyObject_Repr(v);
+        PyObject *kr = AD_ALLOC(PyObject_Repr(k));
+        PyObject *vr = AD_ALLOC(PyObject_Repr(v));
         if (kr == NULL || vr == NULL) {
             Py_XDECREF(kr);
             Py_XDECREF(vr);
@@ -452,7 +525,7 @@ AttributeDict_repr(AttributeDictObject *self)
             Py_ReprLeave((PyObject *)self);
             return NULL;
         }
-        PyObject *item = PyUnicode_FromFormat("%U: %U", kr, vr);
+        PyObject *item = AD_ALLOC(PyUnicode_FromFormat("%U: %U", kr, vr));
         Py_DECREF(kr);
         Py_DECREF(vr);
         if (item == NULL) {
@@ -469,13 +542,13 @@ AttributeDict_repr(AttributeDictObject *self)
         Py_DECREF(item);
     }
 
-    PyObject *sep = PyUnicode_FromString(", ");
+    PyObject *sep = AD_ALLOC(PyUnicode_FromString(", "));
     if (sep == NULL) {
         Py_DECREF(parts);
         Py_ReprLeave((PyObject *)self);
         return NULL;
     }
-    PyObject *body = PyUnicode_Join(sep, parts);
+    PyObject *body = AD_ALLOC(PyUnicode_Join(sep, parts));
     Py_DECREF(sep);
     Py_DECREF(parts);
     if (body == NULL) {
@@ -483,7 +556,7 @@ AttributeDict_repr(AttributeDictObject *self)
         return NULL;
     }
 
-    PyObject *result = PyUnicode_FromFormat("AttributeDict({%U})", body);
+    PyObject *result = AD_ALLOC(PyUnicode_FromFormat("AttributeDict({%U})", body));
     Py_DECREF(body);
     Py_ReprLeave((PyObject *)self);
     return result;
@@ -530,7 +603,7 @@ static struct PyModuleDef attributedict_module = {
 PyMODINIT_FUNC
 PyInit__attributedict(void)
 {
-    PyObject *m = PyModule_Create(&attributedict_module);
+    PyObject *m = AD_ALLOC(PyModule_Create(&attributedict_module));
     if (m == NULL) {
         return NULL;
     }
@@ -547,6 +620,20 @@ PyInit__attributedict(void)
         Py_DECREF(m);
         return NULL;
     }
+
+#ifdef PY_ATTRIBUTEDICT_TESTING
+    {
+        static PyMethodDef testing_methods[] = {
+            {"set_allocation_fail_count", set_allocation_fail_count,
+             METH_O, "Set the allocation-failure counter (test builds only)."},
+            {NULL, NULL, 0, NULL},
+        };
+        if (PyModule_AddFunctions(m, testing_methods) < 0) {
+            Py_DECREF(m);
+            return NULL;
+        }
+    }
+#endif
 
     return m;
 }
