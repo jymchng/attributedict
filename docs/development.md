@@ -176,14 +176,18 @@ GitHub Actions workflows (all least-privilege, SEC-004):
 
 Sanitizer and lint jobs gate merges; wheels validate artifacts.
 
-## C-extension coverage (I-021)
+## C-extension coverage (I-021/I-023)
 
-The C extension `_attributedict.c` is measured with gcov:
+The C extension `_attributedict.c` is measured with gcov. The CI job builds
+with the **test-only** `PY_ATTRIBUTEDICT_TESTING` macro so the deterministic
+allocation-failure tests (`tests/test_failinject.py`) can run and cover the
+OOM branches:
 
 ```bash
 # clean instrumented build (IMPORTANT: remove stale .so first)
 rm -f src/attributedict/*.so
-CFLAGS="-O0 --coverage -fno-omit-frame-pointer" LDFLAGS="--coverage" \
+CFLAGS="-O0 --coverage -fno-omit-frame-pointer -DPY_ATTRIBUTEDICT_TESTING" \
+  LDFLAGS="--coverage" \
   python setup.py build_ext --inplace
 
 # run the suite, then generate coverage
@@ -192,16 +196,19 @@ gcov -o build/temp.linux-x86_64-cpython-313/src/attributedict/ \
   src/attributedict/_attributedict.c   # -> _attributedict.c.gcov
 ```
 
-**Measured: 74.29% line coverage of 210 executable lines** (2026-08-15,
-CPython 3.13, linux x86_64). CI gates this at **>= 70%**
+**Measured: 92.34% line coverage of 209 executable lines** (2026-08-15,
+CPython 3.13, linux x86_64). CI gates this at **> 90%**
 (`.github/workflows/coverage.yml`).
 
-The uncovered ~26% is dominated by **OOM/defensive error paths** that are
-not practically testable: allocation-failure `return NULL`/`return -1`
-branches in conversion, copy, reduce, repr, and module init, plus the
-`PyErr_Occurred()` guard in `tp_getattro` (unreachable for str keys) and
-"key vanished" race guards. These are intentional (MEM-004 discipline);
-a regression below 70% fails CI.
+The remaining uncovered lines are a small set of OOM/defensive error paths
+that the deterministic fault-injection sweep does not drive (e.g. module
+init failures). The test-only macro is never defined in production wheels,
+so no fault-injection code ships; it mirrors CPython's own
+`_testcapi.set_nomemory` approach.
+
+Fault injection also surfaced and fixed a real NULL-safety bug: `tp_repr`
+must not call `Py_ReprLeave` when `Py_ReprEnter` reported recursion or an
+error (CPython defaultdict bug python/cpython#145492).
 
 **Lesson learned:** an interrupted `coverage.py`/instrumented build can leave
 a corrupt `.so` that segfaults — always remove stale `.so` files before a
