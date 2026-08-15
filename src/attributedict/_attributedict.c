@@ -1,13 +1,10 @@
-/* attributedict._attributedict -- C implementation of AttributeDict (I-005).
+/* attributedict._attributedict -- C implementation of AttributeDict.
 
  * The AttributeDict type is a C subclass of dict (PyDict_Type) with:
- *   - custom tp_getattro/tp_setattro  (keys-win resolution; lands in I-008)
- *   - custom tp_new/tp_init           (recursive conversion; lands in I-006)
- *   - custom tp_repr                  (AttributeDict({...}); lands in I-009)
+ *   - custom tp_getattro/tp_setattro  (keys-win resolution; I-008)
+ *   - custom tp_init                  (recursive conversion; I-006)
+ *   - custom tp_repr                  (AttributeDict({...}); I-009)
  *   - GC slots (tp_traverse/tp_clear) (portable Py_VISIT/Py_CLEAR pattern)
- *
- * This file implements the module skeleton + type registration + GC slots.
- * Behavior slots are wired but minimally functional until their issues land.
  *
  * ABI strategy (I-003, D-002): the wheel is tagged abi3 via
  * ``py_limited_api=True`` in setup.py (setuptools renames the artifact to
@@ -21,6 +18,10 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <dictobject.h>
+
+/* Forward declaration (the type is defined near the end of the file but the
+ * conversion helpers reference it). */
+static PyTypeObject AttributeDict_Type;
 
 /* ------------------------------------------------------------------------ */
 /* Type object                                                               */
@@ -69,13 +70,248 @@ AttributeDict_dealloc(AttributeDictObject *self)
     }
 }
 
-/* Construction: for I-005 this is the plain dict new (subclass-aware).
- * Recursive conversion semantics land in I-006. */
+/* ------------------------------------------------------------------------ */
+/* Recursive nested conversion (FR-007, MEM-007)                             */
+/* ------------------------------------------------------------------------ */
+
+/* Conversion context: a dict mapping id(object) -> converted object. It is
+ * seeded with the top-level source before conversion so self-referential
+ * structures reuse the in-progress AttributeDict instead of recursing. */
+
+static int
+AttributeDict_ctx_put(PyObject *ctx, PyObject *obj, PyObject *converted)
+{
+    PyObject *key = PyLong_FromVoidPtr(obj);
+    if (key == NULL) {
+        return -1;
+    }
+    int rc = PyDict_SetItem(ctx, key, converted);
+    Py_DECREF(key);
+    return rc;
+}
+
+/* Returns a borrowed reference to the converted object, or NULL. On NULL,
+ * PyErr_Occurred() distinguishes "not found" (false) from a real error. */
+static PyObject *
+AttributeDict_ctx_get(PyObject *ctx, PyObject *obj)
+{
+    PyObject *key = PyLong_FromVoidPtr(obj);
+    if (key == NULL) {
+        return NULL;
+    }
+    PyObject *existing = PyDict_GetItemWithError(ctx, key);
+    Py_DECREF(key);
+    return existing;
+}
+
+/* Create an empty AttributeDict without running tp_init (avoids recursion).
+ * The caller owns the new reference. */
+static PyObject *
+AttributeDict_NewEmpty(void)
+{
+    PyObject *args = PyTuple_New(0);
+    if (args == NULL) {
+        return NULL;
+    }
+    PyObject *nd = AttributeDict_Type.tp_new(&AttributeDict_Type, args, NULL);
+    Py_DECREF(args);
+    return nd;
+}
+
+/* Recursively convert *value* per FR-007:
+ *   - dict (but NOT an already-converted AttributeDict) -> AttributeDict
+ *   - list/tuple -> same container type with converted elements
+ *   - set/frozenset -> NOT converted (A-008)
+ *   - anything else -> unchanged (incref'd)
+ * Cycle-safe: in-progress conversions are tracked in *ctx*.
+ * Returns a new reference, or NULL with an exception set. */
+static PyObject *
+AttributeDict_ConvertValue(PyObject *value, PyObject *ctx)
+{
+    if (PyObject_TypeCheck(value, &AttributeDict_Type)) {
+        /* Already converted: share it (idempotent; shallow-copy semantics). */
+        Py_INCREF(value);
+        return value;
+    }
+
+    if (PyDict_Check(value)) {
+        PyObject *existing = AttributeDict_ctx_get(ctx, value);
+        if (existing != NULL) {
+            Py_INCREF(existing);
+            return existing;
+        }
+        if (PyErr_Occurred()) {
+            return NULL;
+        }
+
+        PyObject *nd = AttributeDict_NewEmpty();
+        if (nd == NULL) {
+            return NULL;
+        }
+        /* Register BEFORE filling so cycles resolve to *nd*. */
+        if (AttributeDict_ctx_put(ctx, value, nd) < 0) {
+            Py_DECREF(nd);
+            return NULL;
+        }
+
+        PyObject *keys = PyDict_Keys(value);
+        if (keys == NULL) {
+            Py_DECREF(nd);
+            return NULL;
+        }
+        Py_ssize_t n = PyList_GET_SIZE(keys);
+        for (Py_ssize_t i = 0; i < n; i++) {
+            PyObject *k = PyList_GET_ITEM(keys, i);
+            PyObject *v = PyDict_GetItemWithError(value, k);
+            if (v == NULL) {
+                if (!PyErr_Occurred()) {
+                    PyErr_SetString(PyExc_RuntimeError,
+                                    "key vanished during conversion");
+                }
+                Py_DECREF(keys);
+                Py_DECREF(nd);
+                return NULL;
+            }
+            PyObject *cv = AttributeDict_ConvertValue(v, ctx);
+            if (cv == NULL) {
+                Py_DECREF(keys);
+                Py_DECREF(nd);
+                return NULL;
+            }
+            int rc = PyDict_SetItem(nd, k, cv);
+            Py_DECREF(cv);
+            if (rc < 0) {
+                Py_DECREF(keys);
+                Py_DECREF(nd);
+                return NULL;
+            }
+        }
+        Py_DECREF(keys);
+        return nd;
+    }
+
+    if (PyList_Check(value)) {
+        Py_ssize_t n = PyList_GET_SIZE(value);
+        PyObject *nl = PyList_New(n);
+        if (nl == NULL) {
+            return NULL;
+        }
+        for (Py_ssize_t i = 0; i < n; i++) {
+            PyObject *cv = AttributeDict_ConvertValue(PyList_GET_ITEM(value, i), ctx);
+            if (cv == NULL) {
+                Py_DECREF(nl);
+                return NULL;
+            }
+            PyList_SET_ITEM(nl, i, cv);  /* steals the reference */
+        }
+        return nl;
+    }
+
+    if (PyTuple_Check(value)) {
+        Py_ssize_t n = PyTuple_GET_SIZE(value);
+        PyObject *nt = PyTuple_New(n);
+        if (nt == NULL) {
+            return NULL;
+        }
+        for (Py_ssize_t i = 0; i < n; i++) {
+            PyObject *cv = AttributeDict_ConvertValue(PyTuple_GET_ITEM(value, i), ctx);
+            if (cv == NULL) {
+                Py_DECREF(nt);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(nt, i, cv);  /* steals the reference */
+        }
+        return nt;
+    }
+
+    Py_INCREF(value);
+    return value;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Construction (FR-002) + conversion (FR-007)                               */
+/* ------------------------------------------------------------------------ */
+
+/* tp_new delegates to the dict base, which handles every construction form:
+ * (), (mapping), (iterable_of_pairs), (**kwargs), (mapping, **kwargs). */
 static PyObject *
 AttributeDict_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     return type->tp_base->tp_new(type, args, kwds);
 }
+
+/* tp_init: run the base init (populates self per FR-002), then convert all
+ * contained values recursively in place (FR-007), cycle-safe. */
+static int
+AttributeDict_init(AttributeDictObject *self, PyObject *args, PyObject *kwds)
+{
+    PyTypeObject *base = Py_TYPE(self)->tp_base;
+    if (base->tp_init != NULL) {
+        if (base->tp_init((PyObject *)self, args, kwds) < 0) {
+            return -1;
+        }
+    }
+
+    PyObject *ctx = PyDict_New();
+    if (ctx == NULL) {
+        return -1;
+    }
+
+    /* Seed the context with the source mapping (if construction is from a
+     * single mapping) so a self-referential source resolves to *self*. */
+    if (PyTuple_GET_SIZE(args) > 0) {
+        PyObject *src = PyTuple_GET_ITEM(args, 0);
+        if (PyDict_Check(src) && src != (PyObject *)self) {
+            if (AttributeDict_ctx_put(ctx, src, (PyObject *)self) < 0) {
+                Py_DECREF(ctx);
+                return -1;
+            }
+        }
+    }
+
+    /* Convert each value in place. Iterate over a snapshot of keys because
+     * conversion may (in the cycle case) insert into nested objects only,
+     * not into self; the snapshot guards against any reentrancy anyway. */
+    PyObject *keys = PyDict_Keys((PyObject *)self);
+    if (keys == NULL) {
+        Py_DECREF(ctx);
+        return -1;
+    }
+    Py_ssize_t n = PyList_GET_SIZE(keys);
+    for (Py_ssize_t i = 0; i < n; i++) {
+        PyObject *k = PyList_GET_ITEM(keys, i);
+        PyObject *v = PyDict_GetItemWithError((PyObject *)self, k);
+        if (v == NULL) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "key vanished during construction");
+            }
+            Py_DECREF(keys);
+            Py_DECREF(ctx);
+            return -1;
+        }
+        PyObject *cv = AttributeDict_ConvertValue(v, ctx);
+        if (cv == NULL) {
+            Py_DECREF(keys);
+            Py_DECREF(ctx);
+            return -1;
+        }
+        int rc = PyDict_SetItem((PyObject *)self, k, cv);
+        Py_DECREF(cv);
+        if (rc < 0) {
+            Py_DECREF(keys);
+            Py_DECREF(ctx);
+            return -1;
+        }
+    }
+    Py_DECREF(keys);
+    Py_DECREF(ctx);
+    return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Attribute get/set/delete (I-008)                                          */
+/* ------------------------------------------------------------------------ */
 
 /* Attribute get (FR-003 / FR-006: keys win).
  *
@@ -152,6 +388,7 @@ static PyTypeObject AttributeDict_Type = {
     .tp_clear = (inquiry)AttributeDict_clear,
     .tp_getattro = (getattrofunc)AttributeDict_getattro,
     .tp_setattro = (setattrofunc)AttributeDict_setattro,
+    .tp_init = (initproc)AttributeDict_init,
     .tp_new = AttributeDict_new,
 };
 
