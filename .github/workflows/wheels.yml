@@ -140,10 +140,10 @@ jobs:
           installed=0
           for whl in dist/*.whl; do
             case "$whl" in
-              *linux*|*manylinux*|*musllinux*)
+              *x86_64*.whl)
                 ;;
               *)
-                echo "SKIPPED (non-Linux, not installable on this runner): $whl"
+                echo "SKIPPED (not installable on this x86_64 ubuntu runner): $whl"
                 continue
                 ;;
             esac
