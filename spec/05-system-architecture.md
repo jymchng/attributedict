@@ -72,17 +72,19 @@ and available in the Limited API across 3.9–3.14.
 
 ## Attribute Resolution (tp_getattro)
 
-Resolution order (final, per D-004 keys-win):
+Resolution order (final, per I-024 superseding D-004 keys-win):
 
-1. If the attribute name is a `str`, look it up as a **mapping key** first:
-   if the key exists, return `d[key]` (no fallback to type attributes).
-2. Otherwise (key absent or name not a str), fall back to
-   `PyObject_GenericGetAttr` (type attributes, descriptors, methods, dunders).
-3. If that raises AttributeError, propagate it.
+1. Look up the name as a **real type attribute** via
+   `PyObject_GenericGetAttr` (methods, descriptors, dunders). If found,
+   return it.
+2. Otherwise, if the name is a `str` that is a valid identifier **and** a
+   mapping key, return the key's value.
+3. Otherwise raise `AttributeError`.
 
-This makes `d.items` return the key's value when a key `"items"` exists, and
-the bound method otherwise. Descriptors/data-descriptors on the type are
-shadowed by keys per the keys-win rule; documented + tested.
+This makes `d.items` return the bound `dict.items` method even when a key
+`"items"` exists; the key's value is reachable via mapping access
+(`d["items"]`) and via `dict.items(d)`. Descriptors/data-descriptors on the
+type are never shadowed by keys; documented + tested.
 
 ## Attribute Set/Delete (tp_setattro)
 

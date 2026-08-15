@@ -94,5 +94,7 @@ def test_pickle_mutual_cycle():
 def test_pickle_method_named_keys():
     d = AttributeDict(items=42, keys="k")
     loaded = pickle.loads(pickle.dumps(d))
-    assert loaded.items == 42
-    assert loaded.keys == "k"
+    # I-024: attribute access returns the dict method; mapping keeps key
+    assert callable(loaded.items)
+    assert loaded["items"] == 42
+    assert loaded["keys"] == "k"

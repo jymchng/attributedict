@@ -18,18 +18,22 @@ All standard dict methods are inherited and behave like `dict`:
   result keeps the attribute-access type, unlike plain `dict.copy` which
   would return a subclass-typed copy but is overridden here for clarity)
 
-## Keys win interplay (FR-006)
+## Type-attribute / key interplay (FR-006, I-024)
 
-Because attribute lookup checks the mapping first, a key named `items`,
-`keys`, `values`, `get`, `update`, or `copy` shadows the method:
+Attribute lookup checks the **type's real attributes first**; a key named
+`items`, `keys`, `values`, `get`, `update`, or `copy` does **not** shadow the
+method on the attribute path:
 
 ```python
 d = AttributeDict(items=42)
-d.items        # 42
+d.items        # <built-in method items ...> — the real dict method
+list(d.items())  # [('items', 42)]
+d["items"]     # 42 — mapping access keeps the key's value
 dict.items(d)  # dict_items([('items', 42)]) — the mapping view
 ```
 
-The mapping view and base methods remain reachable via `dict.<method>(d)`.
+Mapping access (`d[name]`, `d[name] = v`) always operates on keys. The
+mapping view and base methods remain reachable via `dict.<method>(d)`.
 
 ## Deviation from `dict`
 

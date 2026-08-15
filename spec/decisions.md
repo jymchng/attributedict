@@ -11,7 +11,9 @@ requirements-interrogation answers.
   R-001 (Limited API limitations) documented.
 - D-003 **Nested conversion**: recursive at construction, incl. lists/tuples.
   (User-selected.)
-- D-004 **Collision resolution**: keys win over type attributes/methods.
+- D-004 **Collision resolution**: real type attributes win on the attribute
+  path; mapping access keeps key values (I-024; supersedes the earlier
+  "keys win" decision).
   (User-selected final; supersedes an earlier "methods win" answer.)
 - D-005 **Construction**: all dict forms. (User-selected.)
 - D-006 **Pickle/copy/deepcopy**: supported incl. cycles. (User-selected.)

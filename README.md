@@ -26,8 +26,9 @@ assert config["debug"] is True
 
 - **Genuine C extension** — a C subclass of `dict` with custom
   `tp_getattro`/`tp_setattro`; `isinstance(d, dict)` is `True`.
-- **Keys win** — a key named `items`/`keys`/`get`/... shadows the method;
-  the mapping view stays reachable via `dict.items(d)` (FR-006).
+- **Type attributes win on the attribute path** — `d.items` reads the real
+  `dict` method even when a key `"items"` exists; `d["items"]` keeps the
+  key's value (FR-006, I-024).
 - **Recursive nested conversion** at construction, cycle-safe: nested dicts
   (and dicts inside lists/tuples) become `AttributeDict` (FR-007).
 - **Full dict compatibility** — mapping protocol, dict methods, views,

@@ -360,16 +360,35 @@ fail:
 static PyObject *
 AttributeDict_getattro(AttributeDictObject *self, PyObject *name)
 {
+    /* I-024 (FR-006/D-004 refinement): REAL dict attributes win on the
+     * attribute path. Try the type's attribute machinery first so methods
+     * and descriptors (items/keys/get/copy/...) are never shadowed by keys;
+     * only if the name is NOT a real type attribute do we fall through to
+     * the mapping-key lookup (identifier keys only). Mapping access
+     * (d[name]) is untouched and keeps returning key values. */
+    PyObject *attr = PyObject_GenericGetAttr((PyObject *)self, name);
+    if (attr != NULL) {
+        return attr;
+    }
+    if (!PyErr_ExceptionMatches(PyExc_AttributeError)) {
+        return NULL;  /* real error (e.g. exception from a property) */
+    }
+    PyErr_Clear();  /* intentional: try the key path (MEM-004) */
+
     if (PyUnicode_Check(name) && PyUnicode_IsIdentifier(name)) {
         /* A str key is always hashable, so PyDict_GetItem cannot raise:
-         * NULL unambiguously means "key absent" -> fall through. */
+         * NULL unambiguously means "key absent". */
         PyObject *value = PyDict_GetItem((PyObject *)self, name);
         if (value != NULL) {
             Py_INCREF(value);
             return value;
         }
     }
-    return PyObject_GenericGetAttr((PyObject *)self, name);
+    /* Key absent and no type attribute: surface AttributeError. */
+    PyErr_Format(PyExc_AttributeError,
+                 "'%.100s' object has no attribute '%U'",
+                 Py_TYPE(self)->tp_name, name);
+    return NULL;
 }
 
 /* Attribute set/delete (FR-004/005).

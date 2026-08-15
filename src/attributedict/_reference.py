@@ -113,15 +113,23 @@ class AttributeDict(dict[Any, Any]):
 
     # -- attribute get (FR-003 / FR-006: keys win) -------------------------
     def __getattribute__(self, name: str) -> Any:
-        # Keys win: any present key that is a usable attribute name shadows
-        # type attributes/methods (FR-006). Non-identifier keys are NOT
-        # reachable via attribute syntax (FR-014).
+        # I-024 (FR-006/D-004 refinement): real type attributes (methods,
+        # descriptors) win on the attribute path. Try object attribute
+        # lookup first; only if the name is NOT a real type attribute do we
+        # fall through to the mapping-key lookup (identifier keys only).
+        # Mapping access (d[name]) is untouched and keeps returning keys.
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            pass
         if isinstance(name, str) and name.isidentifier():
             try:
                 return dict.__getitem__(self, name)
             except KeyError:
                 pass
-        return object.__getattribute__(self, name)
+        raise AttributeError(
+            f"{type(self).__name__!r} object has no attribute {name!r}"
+        )
 
     # -- attribute set (FR-004) -------------------------------------------
     def __setattr__(self, name: str, value: Any) -> None:

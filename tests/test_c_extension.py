@@ -49,7 +49,9 @@ def test_dict_method_inheritance():
 
 def test_dict_items_reachable_when_key_shadows():
     d = AttributeDict(items=42)
-    assert d.items == 42
+    # I-024: attribute access returns the real dict method; mapping keeps key
+    assert callable(d.items)
+    assert d["items"] == 42
     view = dict.items(d)
     assert isinstance(view, type({}.items()))
     assert dict(view) == {"items": 42}
@@ -57,7 +59,7 @@ def test_dict_items_reachable_when_key_shadows():
 
 def test_dict_get_reachable_when_key_shadows():
     d = AttributeDict(get="shadowed")
-    assert d.get == "shadowed"
+    assert callable(d.get)
     assert dict.get(d, "missing", "default") == "default"
 
 
