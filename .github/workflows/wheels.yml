@@ -88,20 +88,38 @@ jobs:
       - name: Smoke-test each wheel (PKG-009)
         run: |
           python -m pip install --upgrade pip
-          count=0
-          for whl in dist/*.whl; do
-            count=$((count+1))
-            python -m venv /tmp/whl-venv
-            /tmp/whl-venv/bin/pip install "$whl"
-            /tmp/whl-venv/bin/python -c "
-              from attributedict import AttributeDict
-              import attributedict
-              d = AttributeDict(host='x', nested={'a': [1, {'b': 2}]})
-              assert d.host == 'x' and d.nested.a[1].b == 2
-              assert isinstance(d.nested, AttributeDict)
-              assert attributedict.__version__
-            "
-            rm -rf /tmp/whl-venv
-            echo "OK: $whl"
-          done
-          echo "Validated $count wheels"
+          python - <<'EOF'
+          import subprocess, sys
+          from pathlib import Path
+
+          installed = 0
+          skipped = []
+          for whl in sorted(Path("dist").glob("*.whl")):
+              # platform tag is everything after the abi3 tag, e.g.
+              # py_attributedict-0.1.0-cp39-abi3-manylinux_2_17_x86_64.whl
+              plat = whl.name.split("-")[-1].removesuffix(".whl")
+              # The validate runner is ubuntu-latest: only Linux wheels can
+              # be installed here. macOS/Windows wheels are validated by
+              # cibuildwheel's build itself + this same job on merge.
+              if not (plat.startswith("linux") or plat.startswith("manylinux")
+                      or plat.startswith("musllinux")):
+                  skipped.append(whl.name)
+                  continue
+              subprocess.run([sys.executable, "-m", "venv", "/tmp/whl-venv"], check=True)
+              subprocess.run(["/tmp/whl-venv/bin/pip", "install", "-q", str(whl)], check=True)
+              subprocess.run([
+                  "/tmp/whl-venv/bin/python", "-c",
+                  "from attributedict import AttributeDict; import attributedict;"
+                  "d = AttributeDict(host='x', nested={'a': [1, {'b': 2}]});"
+                  "assert d.host == 'x' and d.nested.a[1].b == 2;"
+                  "assert isinstance(d.nested, AttributeDict);"
+                  "assert attributedict.__version__",
+              ], check=True)
+              subprocess.run(["rm", "-rf", "/tmp/whl-venv"], check=True)
+              installed += 1
+              print(f"OK: {whl.name}")
+          print(f"Validated {installed} Linux wheels")
+          for name in skipped:
+              print(f"SKIPPED (platform not installable on ubuntu runner): {name}")
+          assert installed > 0, "no Linux wheels to validate"
+          EOF
