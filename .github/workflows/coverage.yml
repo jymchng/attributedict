@@ -1,10 +1,11 @@
-# I-021: C-extension coverage (gcov) CI job (10-testing, NFR-004, SEC-004).
+# I-021/I-023: C-extension coverage (gcov) CI job (10-testing, NFR-004, SEC-004).
 #
-# Builds _attributedict.c with gcov instrumentation, runs the full suite,
-# generates line coverage with gcov, and gates on a line-coverage threshold
-# for _attributedict.c. The measured baseline is 74.29% (2026-08-15); the
-# uncovered remainder is dominated by OOM/defensive error paths that are
-# not practically testable (documented in docs/development.md).
+# Builds _attributedict.c with gcov instrumentation AND the test-only
+# PY_ATTRIBUTEDICT_TESTING macro (so the deterministic allocation-failure
+# tests in tests/test_failinject.py can run), executes the full suite,
+# generates line coverage with gcov, and gates on > 90% line coverage for
+# _attributedict.c. Measured: 92.34% of 209 lines (2026-08-15).
+# The test-only macro is never defined in production wheels.
 
 name: coverage
 
@@ -31,11 +32,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install setuptools wheel pytest hypothesis gcovr
 
-      - name: Build extension with gcov (clean rebuild)
+      - name: Build extension with gcov (clean rebuild, test macro)
         run: |
           rm -f src/attributedict/*.so
           find . -name __pycache__ -type d -prune -exec rm -rf {} +
-          CFLAGS="-O0 --coverage -fno-omit-frame-pointer" \
+          CFLAGS="-O0 --coverage -fno-omit-frame-pointer -DPY_ATTRIBUTEDICT_TESTING" \
           LDFLAGS="--coverage" \
           python setup.py build_ext --inplace
 
@@ -47,7 +48,7 @@ jobs:
           gcov -o build/temp.linux-x86_64-cpython-313/src/attributedict/ \
             src/attributedict/_attributedict.c
 
-      - name: Check C line-coverage threshold (>= 70%)
+      - name: Check C line-coverage threshold (> 90%)
         run: |
           python - <<'EOF'
           import re, pathlib
@@ -57,7 +58,7 @@ jobs:
               raise SystemExit("gcov summary not found")
           pct = float(m.group(1)); total = int(m.group(2))
           print(f"_attributedict.c line coverage: {pct}% of {total} lines")
-          if pct < 70.0:
-              raise SystemExit(f"FAIL: C line coverage {pct}% < 70% threshold")
-          print("PASS: C line coverage >= 70%")
+          if pct <= 90.0:
+              raise SystemExit(f"FAIL: C line coverage {pct}% <= 90% threshold")
+          print("PASS: C line coverage > 90%")
           EOF

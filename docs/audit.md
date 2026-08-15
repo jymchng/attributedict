@@ -77,10 +77,12 @@ YAML/dataclass interop.
 
 ## 4. Known Limitations & Technical Debt
 
-- **C line coverage 74.29%** (I-021): the uncovered ~26% is OOM/defensive
-  error paths (allocation-failure returns, `PyErr_Occurred` guard in
-  `tp_getattro`, "key vanished" race guards) that are not practically
-  testable; CI gates at ≥ 70%.
+- **C line coverage 92.34%** (I-021/I-023): the C core is measured with
+  gcov (209 executable lines) and CI gates at **> 90%** via the test-only
+  `PY_ATTRIBUTEDICT_TESTING` allocation-failure switch
+  (`tests/test_failinject.py`); the small uncovered remainder is module-init
+  and a few OOM paths not driven by the sweep. No fault-injection code ships
+  in production wheels.
 - **Python-layer coverage** measures only the pure-Python wrapper/reference
   (~98%); the C core is measured by gcov (above).
 - **3.9 CI coverage**: 3.9 runs in the tests.yml matrix but was not
