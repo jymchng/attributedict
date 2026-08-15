@@ -1,18 +1,21 @@
 # I-017: cibuildwheel abi3 matrix (PKG-006, PKG-009, SEC-004).
 #
 # Builds cp39-abi3 wheels (one per platform/arch, covering CPython 3.9+ via
-# the stable ABI) on:
-#   Linux   (manylinux): x86_64, aarch64, i686, ppc64le, s390x, armv7l
-#   macOS:               arm64, x86_64
-#   Windows:             AMD64, ARM64, x86
+# the stable ABI):
+#   build_wheels_ci (PR + push to main, cheap/fast):
+#     x86_64, aarch64 (Linux); arm64, x86_64 (macOS); AMD64 (Windows)
+#   build_wheels_release (tag push v* + workflow_dispatch, FULL matrix):
+#     Linux manylinux x86_64/aarch64/i686/ppc64le/s390x/armv7l (QEMU),
+#     macOS arm64/x86_64, Windows AMD64/ARM64/x86
 # Non-x86_64 Linux archs are cross-built via QEMU (docker/setup-qemu-action).
-# Uploads artifacts; validates each wheel installs + smoke.
+# Uploads artifacts; validates Linux wheels install + smoke on ubuntu.
 
 name: wheels
 
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
@@ -20,9 +23,49 @@ permissions:
   contents: read
 
 jobs:
-  build_wheels:
-    name: Build wheel (${{ matrix.os }} ${{ matrix.arch }})
+  build_wheels_ci:
+    name: Build wheel CI (${{ matrix.os }} ${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-latest
+            arch: aarch64
+          - os: macos-latest
+            arch: arm64
+          - os: macos-latest
+            arch: x86_64
+          - os: windows-latest
+            arch: AMD64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up QEMU (aarch64)
+        if: runner.os == 'Linux' && matrix.arch != 'x86_64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - uses: pypa/cibuildwheel@v4.2.0
+        env:
+          CIBW_ARCHS: ${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.arch }}
+          path: ./wheelhouse/*.whl
+
+  build_wheels_release:
+    name: Build wheel FULL (${{ matrix.os }} ${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_type == 'tag')
     strategy:
       fail-fast: false
       matrix:
@@ -72,7 +115,8 @@ jobs:
 
   validate_wheels:
     name: Validate wheels
-    needs: build_wheels
+    needs: [build_wheels_ci, build_wheels_release]
+    if: always() && (needs.build_wheels_ci.result == 'success' || needs.build_wheels_release.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
