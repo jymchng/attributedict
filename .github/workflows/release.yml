@@ -1,9 +1,15 @@
-# I-017: release workflow (PKG-008, SEC-006).
+# I-017/I-023: release workflow (PKG-008, SEC-006).
 #
-# Manual-trigger (workflow_dispatch) only. Builds sdist + abi3 wheels,
-# validates them, and creates a GitHub Release with the artifacts.
-# NO auto-publish to PyPI (C-006): publishing requires an explicitly
-# configured trusted-publisher environment by the maintainer.
+# Manual-trigger (workflow_dispatch) only. Builds sdist + abi3 wheels via
+# the cibuildwheel matrix, validates them, creates a GitHub Release with the
+# artifacts, and publishes to PyPI via TRUSTED PUBLISHING (OIDC) — no
+# credentials/tokens are stored in the repo.
+#
+# Trusted publishing setup (maintainer, one-time):
+#   1. Create/claim the "attributedict" project on PyPI.
+#   2. Add a "publishing source": GitHub Actions, owner jymchng, repo
+#      attributedict, workflow "release.yml", environment "release".
+#   3. The publish job below then authenticates via OIDC with no secrets.
 
 name: release
 
@@ -16,7 +22,8 @@ on:
         type: string
 
 permissions:
-  contents: write  # needed to create the GitHub Release (SEC-004: scoped)
+  contents: write  # GitHub Release (SEC-004: scoped)
+  id-token: write  # OIDC for PyPI trusted publishing
 
 jobs:
   release:
@@ -36,7 +43,7 @@ jobs:
           python -m build --sdist --outdir dist
 
       - name: Build abi3 wheels
-        uses: pypa/cibuildwheel@v2.19.2
+        uses: pypa/cibuildwheel@v4.2.0
         with:
           output-dir: dist
         env:
@@ -51,10 +58,33 @@ jobs:
               print(f"{f}: {h}")
           EOF
 
+      - name: Upload artifacts to the release
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3.0.2
         with:
           tag_name: ${{ inputs.tag }}
           files: dist/*
           draft: true
           generate_release_notes: true
+
+  publish:
+    # Publish to PyPI via trusted publishing (OIDC).
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Publish to PyPI (trusted publishing)
+        uses: pypa/gh-action-pypi-publish@v1.14.2
+        with:
+          packages-dir: dist
