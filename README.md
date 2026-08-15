@@ -1,5 +1,12 @@
 # attributedict
 
+[![CI](https://github.com/jymchng/attributedict/actions/workflows/tests.yml/badge.svg)](https://github.com/jymchng/attributedict/actions/workflows/tests.yml)
+[![Lint](https://github.com/jymchng/attributedict/actions/workflows/lint.yml/badge.svg)](https://github.com/jymchng/attributedict/actions/workflows/lint.yml)
+[![Wheels](https://github.com/jymchng/attributedict/actions/workflows/wheels.yml/badge.svg)](https://github.com/jymchng/attributedict/actions/workflows/wheels.yml)
+[![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](docs/installation.md)
+[![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)](docs/compatibility.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A production-quality **CPython C extension** implementing an `AttributeDict`:
 a `dict` subclass whose keys are also accessible through attribute syntax
 (`d["host"] == d.host`).
