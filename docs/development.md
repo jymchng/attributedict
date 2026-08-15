@@ -131,3 +131,31 @@ Any leak, use-after-free, or undefined behavior fails the job (R-003 gate).
 
 `dict` does not support weak references; `AttributeDict` matches dict — do
 not expect `weakref.ref(AttributeDict())` to work.
+
+## Development tooling (I-016, NFR-009)
+
+Reproducible sessions via `nox`:
+
+```bash
+nox -s tests        # pytest across 3.9-3.13
+nox -s lint         # ruff check
+nox -s format       # ruff format --check
+nox -s typecheck    # mypy (strict)
+nox -s coverage     # pytest --cov (gate: 80%)
+nox -s build        # sdist + abi3 wheel
+nox -s benchmarks   # benchmarks/bench.py
+```
+
+pre-commit hooks (ruff, ruff-format, mypy, end-of-file, trailing-whitespace):
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+Quality gates (all must pass): `ruff check` clean, `ruff format --check`
+clean, `mypy` clean, `pytest` green, coverage >= 80%.
+
+Typing honesty (DOC-002): the C extension has no stubs; mypy is configured
+with `ignore_missing_imports` for `attributedict._attributedict`. Attribute
+access cannot be fully typed statically; this limitation is documented.

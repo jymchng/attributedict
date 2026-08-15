@@ -6,10 +6,10 @@ isinstance, mapping-view reachability, cycle-safe conversion. See spec 10.
 
 from __future__ import annotations
 
+import attributedict._attributedict as cmod
 import pytest
 
 from attributedict import AttributeDict
-import attributedict._attributedict as cmod
 
 
 def test_type_module_and_name():
@@ -32,9 +32,18 @@ def test_isinstance_dict():
 
 
 def test_dict_method_inheritance():
-    d = AttributeDict(a=1)
-    for meth in ("get", "setdefault", "update", "pop", "popitem", "clear",
-                 "keys", "items", "values", "fromkeys"):
+    for meth in (
+        "get",
+        "setdefault",
+        "update",
+        "pop",
+        "popitem",
+        "clear",
+        "keys",
+        "items",
+        "values",
+        "fromkeys",
+    ):
         assert callable(getattr(AttributeDict, meth)), meth
 
 

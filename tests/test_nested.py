@@ -8,10 +8,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 
-import pytest
-
 from attributedict import AttributeDict
-
 
 # ---------------------------------------------------------------------------
 # FR-002 — construction forms

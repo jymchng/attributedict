@@ -25,13 +25,13 @@ def test_missing_key_keyerror():
 
 def test_missing_attr_attributeerror():
     with pytest.raises(AttributeError):
-        AttributeDict().missing
+        AttributeDict().missing  # noqa: B018
 
 
 def test_del_missing_attr_attributeerror():
     d = AttributeDict()
     with pytest.raises(AttributeError):
-        del d.missing
+        del d.missing  # noqa: B018
 
 
 def test_del_missing_key_keyerror():
@@ -69,7 +69,7 @@ def test_missing_key_message():
 
 def test_missing_attr_message():
     with pytest.raises(AttributeError) as ei:
-        AttributeDict().missing
+        AttributeDict().missing  # noqa: B018
     msg = str(ei.value)
     assert "has no attribute 'missing'" in msg
     assert TYPE_NAME in msg
@@ -78,7 +78,7 @@ def test_missing_attr_message():
 def test_del_missing_attr_message():
     d = AttributeDict()
     with pytest.raises(AttributeError) as ei:
-        del d.missing
+        del d.missing  # noqa: B018
     msg = str(ei.value)
     assert "has no attribute 'missing'" in msg
 
@@ -123,7 +123,7 @@ def test_no_stale_exception_after_attr_ops():
     d = AttributeDict()
     # cause a failure
     with pytest.raises(AttributeError):
-        del d.missing
+        del d.missing  # noqa: B018
     # subsequent ops succeed and see a clean interpreter state
     d.foo = 1
     assert d.foo == 1

@@ -15,7 +15,6 @@ import pytest
 
 from attributedict._reference import AttributeDict
 
-
 # ---------------------------------------------------------------------------
 # FR-001 — type/package identity (reference is importable, dict subclass)
 # ---------------------------------------------------------------------------
@@ -63,7 +62,7 @@ def test_fr003_attr_get_existing():
 
 def test_fr003_attr_get_missing_raises_attribute_error():
     with pytest.raises(AttributeError):
-        AttributeDict().missing
+        AttributeDict().missing  # noqa: B018
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +91,7 @@ def test_fr005_attr_delete_removes_key():
 def test_fr005_attr_delete_missing_raises_attribute_error():
     d = AttributeDict()
     with pytest.raises(AttributeError):
-        del d.missing
+        del d.missing  # noqa: B018
 
 
 # ---------------------------------------------------------------------------

@@ -44,6 +44,37 @@ attributedict = ["py.typed"]
 testpaths = ["tests"]
 addopts = "-ra"
 
+# --- Dev tooling (I-016, NFR-009) ---
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["UP006", "UP007"]  # keep py39-compatible typing style
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unused_configs = true
+# typing limitations for the dynamic attribute access are documented (DOC-002)
+files = ["src/attributedict"]
+exclude = ["src/attributedict/_attributedict.c"]
+
+[[tool.mypy.overrides]]
+module = "attributedict._attributedict"
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["attributedict"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
 # --- cibuildwheel (I-015, PKG-006): abi3 wheels per platform ---
 [tool.cibuildwheel]
 build = "cp39-abi3-*"

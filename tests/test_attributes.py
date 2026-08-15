@@ -10,7 +10,6 @@ import pytest
 
 from attributedict import AttributeDict
 
-
 # ---------------------------------------------------------------------------
 # FR-003 — attribute get
 # ---------------------------------------------------------------------------
@@ -23,7 +22,7 @@ def test_fr003_attr_get_existing():
 
 def test_fr003_attr_get_missing_raises_attribute_error():
     with pytest.raises(AttributeError):
-        AttributeDict().missing
+        AttributeDict().missing  # noqa: B018
 
 
 # ---------------------------------------------------------------------------
@@ -132,7 +131,7 @@ def test_fr014_non_str_keys_mapping_only():
 
 def test_no_stale_exception_after_successful_attr_ops():
     d = AttributeDict()
-    d.foo = 1          # set succeeds
+    d.foo = 1  # set succeeds
     assert d.foo == 1  # get succeeds
-    del d.foo          # delete succeeds
-    assert d == {}     # dict still consistent
+    del d.foo  # delete succeeds
+    assert d == {}  # dict still consistent

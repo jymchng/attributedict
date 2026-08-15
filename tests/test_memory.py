@@ -94,7 +94,6 @@ def test_gc_module_finds_cycles():
     d = AttributeDict()
     d.self_ref = d
     # without a reference the cycle must be collectible
-    refs = gc.get_objects()
     _ = d  # keep alive until here
     del d
     gc.collect()

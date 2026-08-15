@@ -16,12 +16,12 @@ This module is an implementation detail; it is not part of the public API.
 
 from __future__ import annotations
 
-from typing import Any, Type, TypeVar
+from typing import Any, TypeVar
 
 AD = TypeVar("AD", bound="Any")
 
 
-def reconstruct(cls: Type[AD]) -> AD:
+def reconstruct(cls: type[AD]) -> AD:
     """Create an empty AttributeDict of type *cls* (fill happens via pickle's
     dictitems update, which is cycle-safe through the memo)."""
-    return cls.__new__(cls)
+    return cls.__new__(cls)  # type: ignore[call-overload,no-any-return]

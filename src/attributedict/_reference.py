@@ -30,7 +30,8 @@ Implementation notes for the C port:
 from __future__ import annotations
 
 import copy as _copy
-from typing import Any, Dict, Iterable, Tuple, Type, TypeVar
+from collections.abc import Iterable
+from typing import Any, TypeVar
 
 __all__ = ["AttributeDict"]
 
@@ -48,7 +49,7 @@ class _Converting:
     __slots__ = ("_seen",)
 
     def __init__(self) -> None:
-        self._seen: Dict[int, Any] = {}
+        self._seen: dict[int, Any] = {}
 
     def get(self, obj: Any) -> Any:
         return self._seen.get(id(obj))
@@ -91,7 +92,7 @@ def convert_value(value: Any, ctx: _Converting) -> Any:
 # ---------------------------------------------------------------------------
 
 
-class AttributeDict(dict):
+class AttributeDict(dict[Any, Any]):
     """A ``dict`` subclass whose keys are also accessible as attributes.
 
     ``d["host"] == d.host`` when the key is a valid identifier and does not
@@ -148,29 +149,28 @@ class AttributeDict(dict):
 
     __copy__ = copy
 
-    def __deepcopy__(self, memo: Dict[int, Any]) -> "AttributeDict":
+    def __deepcopy__(self, memo: dict[int, Any]) -> AttributeDict:
         existing = memo.get(id(self))
         if existing is not None:
-            return existing
+            return existing  # type: ignore[no-any-return]
         cls = type(self)
         new = cls.__new__(cls)
         memo[id(self)] = new
         for k, v in dict.items(self):
-            dict.__setitem__(new, _copy.deepcopy(k, memo),
-                             _copy.deepcopy(v, memo))
+            dict.__setitem__(new, _copy.deepcopy(k, memo), _copy.deepcopy(v, memo))
         return new
 
     # -- pickle (FR-013) ---------------------------------------------------
-    def __reduce__(self):
+    def __reduce__(self) -> tuple[Any, ...]:
         return (_reconstruct, (type(self), dict(self)))
 
     # -- classmethod fromkeys (FR-009) --------------------------------------
     @classmethod
-    def fromkeys(cls: Type[AD], iterable: Iterable[Any], value: Any = None) -> AD:
+    def fromkeys(cls: type[AD], iterable: Iterable[Any], value: Any = None) -> AD:
         return cls(dict.fromkeys(iterable, value))
 
 
-def _reconstruct(cls: Type[AD], data: Dict[Any, Any]) -> AD:
+def _reconstruct(cls: type[AD], data: dict[Any, Any]) -> AD:
     """Pickle helper: rebuild an AttributeDict from a plain dict.
 
     Nested AttributeDicts inside *data* are already AttributeDict instances
