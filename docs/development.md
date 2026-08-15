@@ -159,3 +159,19 @@ clean, `mypy` clean, `pytest` green, coverage >= 80%.
 Typing honesty (DOC-002): the C extension has no stubs; mypy is configured
 with `ignore_missing_imports` for `attributedict._attributedict`. Attribute
 access cannot be fully typed statically; this limitation is documented.
+
+## CI (I-017, NFR-008)
+
+GitHub Actions workflows (all least-privilege, SEC-004):
+
+- `tests.yml` — build + pytest matrix: CPython 3.9–3.13 on ubuntu; 3.13 on
+  windows; 3.11/3.13 on macos (sensible matrix, R-006).
+- `lint.yml` — ruff check, ruff format --check, mypy (strict).
+- `sanitizers.yml` — ASan/UBSan debug build + full suite + stress (I-012).
+- `wheels.yml` — cibuildwheel abi3 matrix (manylinux x86_64+aarch64, macOS
+  arm64+x86_64, Windows x86_64) + per-wheel smoke validation (PKG-009).
+- `docs.yml` — internal link validation + README example check.
+- `release.yml` — manual-trigger; builds sdist + wheels, hashes artifacts,
+  creates a GitHub Release (draft). No PyPI auto-publish (PKG-008, SEC-006).
+
+Sanitizer and lint jobs gate merges; wheels validate artifacts.

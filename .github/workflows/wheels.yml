@@ -1,0 +1,72 @@
+# I-017: cibuildwheel abi3 matrix (PKG-006, PKG-009, SEC-004).
+#
+# Builds cp39-abi3 wheels on manylinux (x86_64+aarch64), macOS (arm64+x86_64),
+# Windows (x86_64); uploads artifacts; validates each wheel installs + smoke.
+
+name: wheels
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }} (${{ matrix.archs }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            archs: x86_64 aarch64
+          - os: macos-latest
+            archs: arm64 x86_64
+          - os: windows-latest
+            archs: x86_64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pypa/cibuildwheel@v2.19.2
+        env:
+          CIBW_ARCHS: ${{ matrix.archs }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
+  validate_wheels:
+    name: Validate wheels
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: ./dist
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Smoke-test each wheel (PKG-009)
+        run: |
+          python -m pip install --upgrade pip
+          for whl in dist/*.whl; do
+            python -m venv /tmp/whl-venv
+            /tmp/whl-venv/bin/pip install "$whl"
+            /tmp/whl-venv/bin/python -c "
+              from attributedict import AttributeDict
+              d = AttributeDict(host='x', nested={'a': [1, {'b': 2}]})
+              assert d.host == 'x' and d.nested.a[1].b == 2
+              assert isinstance(d.nested, AttributeDict)
+            "
+            rm -rf /tmp/whl-venv
+            echo "OK: $whl"
+          done

@@ -1,0 +1,57 @@
+# I-017: docs build + link validation (14-documentation, SEC-004).
+
+name: docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Validate internal markdown links
+        run: |
+          python -m pip install --upgrade pip
+          python - <<'EOF'
+          from pathlib import Path
+          import re
+
+          errors = []
+          for md in sorted(Path("docs").glob("*.md")):
+              text = md.read_text()
+              for m in re.finditer(r"\[[^\]]*\]\(([^)]+)\)", text):
+                  target = m.group(1)
+                  if target.startswith(("http://", "https://", "#")):
+                      continue
+                  target_path = (md.parent / target).resolve()
+                  if not target_path.exists():
+                      errors.append(f"{md}: broken link -> {target}")
+          if errors:
+              print("\n".join(errors))
+              raise SystemExit(1)
+          print("all internal doc links valid")
+          EOF
+
+      - name: Verify README examples run
+        run: |
+          python -m pip install -e .
+          python - <<'EOF'
+          from attributedict import AttributeDict
+          config = AttributeDict(host="localhost", port=8080)
+          assert config["host"] == "localhost"
+          assert config.host == "localhost"
+          config.debug = True
+          assert config["debug"] is True
+          print("README example OK")
+          EOF
