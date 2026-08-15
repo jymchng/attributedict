@@ -119,6 +119,11 @@ jobs:
     if: always() && (needs.build_wheels_ci.result == 'success' || needs.build_wheels_release.result == 'success')
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
       - uses: actions/download-artifact@v4
         with:
           pattern: wheels-*
