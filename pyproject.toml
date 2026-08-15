@@ -43,3 +43,17 @@ attributedict = ["py.typed"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+
+# --- cibuildwheel (I-015, PKG-006): abi3 wheels per platform ---
+[tool.cibuildwheel]
+build = "cp39-abi3-*"
+archs = ["x86_64", "aarch64", "arm64", "auto64"]
+
+[tool.cibuildwheel.macos]
+archs = ["arm64", "x86_64"]
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64"]
+
+[tool.cibuildwheel.windows]
+archs = ["x86_64"]
