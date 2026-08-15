@@ -1,0 +1,65 @@
+# I-012: sanitizer (ASan/UBSan) CI job (MEM-008, NFR-004).
+#
+# Builds the C extension with AddressSanitizer + UndefinedBehaviorSanitizer
+# and runs the full test suite plus the memory/stress tests. Any leak,
+# use-after-free, or UB fails the job.
+
+name: sanitizers
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install setuptools wheel pytest
+
+      - name: Build extension with sanitizers
+        env:
+          CFLAGS: "-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer"
+          LDFLAGS: "-fsanitize=address,undefined"
+          PYTHONMALLOC: malloc
+        run: |
+          python setup.py build_ext --inplace
+
+      - name: Run test suite under sanitizers
+        env:
+          ASAN_OPTIONS: "detect_leaks=1:abort_on_error=1"
+          UBSAN_OPTIONS: "halt_on_error=1"
+          PYTHONMALLOC: malloc
+        run: |
+          python -m pytest tests/ -v
+
+      - name: Stress test (construct/destroy many + cyclic)
+        env:
+          ASAN_OPTIONS: "detect_leaks=1:abort_on_error=1"
+          PYTHONMALLOC: malloc
+        run: |
+          python -c "
+          from attributedict import AttributeDict
+          import gc
+          for i in range(20000):
+              d = AttributeDict(x=1, y={'z': 2})
+              d.extra = i
+              del d
+          for i in range(2000):
+              d = AttributeDict(); d.self_ref = d
+              del d
+          gc.collect()
+          print('stress OK')
+          "

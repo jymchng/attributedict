@@ -68,12 +68,16 @@ No extra per-instance C struct; keys/values are owned by the dict base
   UndefinedBehaviorSanitizer (via `-fsanitize=address,undefined` with a
   debug CPython where available) and run the test suite + a stress test that
   constructs/destroys many AttributeDicts and cyclic structures.
+- MEM-009 Weakrefs: `dict` does not support weak references in CPython
+  (verified); `AttributeDict` matches dict — no weakref support, no custom
+  weakref code.
 
 ## Weakrefs
 
-`dict` supports weakrefs; the subclass inherits that. Verify at I-005 that a
-weakref to an AttributeDict works and `tp_weaklistoffset` is inherited. No
-custom weakref code expected.
+`dict` does NOT support weak references in CPython (confirmed: `weakref.ref({})`
+raises `TypeError`). As a dict subclass, `AttributeDict` inherits this — no
+weakref support, matching `dict` exactly. This is documented behavior
+(MEM-009). No custom weakref code is added.
 
 ## Code-review checklist
 

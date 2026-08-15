@@ -107,3 +107,27 @@ No custom weakref code expected.
 - `nox -s tests` — full suite (I-013).
 - `nox -s coverage` — coverage report.
 - Memory/sanitizer tests land in I-012.
+
+## Sanitizers (I-012, MEM-008)
+
+Build and run the suite under AddressSanitizer + UndefinedBehaviorSanitizer:
+
+```bash
+CFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer" \
+LDFLAGS="-fsanitize=address,undefined" \
+PYTHONMALLOC=malloc \
+python setup.py build_ext --inplace
+
+ASAN_OPTIONS="detect_leaks=1:abort_on_error=1" \
+UBSAN_OPTIONS="halt_on_error=1" \
+PYTHONMALLOC=malloc \
+python -m pytest tests/
+```
+
+The CI job `.github/workflows/sanitizers.yml` runs this on every push/PR.
+Any leak, use-after-free, or undefined behavior fails the job (R-003 gate).
+
+## Weakrefs (MEM-009)
+
+`dict` does not support weak references; `AttributeDict` matches dict — do
+not expect `weakref.ref(AttributeDict())` to work.
