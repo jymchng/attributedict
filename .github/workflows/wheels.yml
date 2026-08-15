@@ -1,7 +1,8 @@
 # I-017: cibuildwheel abi3 matrix (PKG-006, PKG-009, SEC-004).
 #
 # Builds cp39-abi3 wheels on manylinux (x86_64+aarch64), macOS (arm64+x86_64),
-# Windows (x86_64); uploads artifacts; validates each wheel installs + smoke.
+# Windows (AMD64); uploads artifacts; validates each wheel installs + smoke.
+# Note: cibuildwheel uses 'AMD64' (not 'x86_64') for Windows archs.
 
 name: wheels
 
@@ -27,7 +28,7 @@ jobs:
           - os: macos-latest
             archs: arm64 x86_64
           - os: windows-latest
-            archs: x86_64
+            archs: AMD64
     steps:
       - uses: actions/checkout@v4
 

@@ -91,4 +91,4 @@ archs = ["arm64", "x86_64"]
 archs = ["x86_64", "aarch64"]
 
 [tool.cibuildwheel.windows]
-archs = ["x86_64"]
+archs = ["AMD64"]
