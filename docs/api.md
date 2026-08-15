@@ -34,10 +34,10 @@ All forms match `dict`. Nested mappings are recursively converted (FR-007).
 | `d[key]` | dict getitem |
 | `d[key] = v` | dict setitem |
 | `del d[key]` | dict delitem |
-| `d.name` | if `"name"` is a key → `d["name"]`; else normal attribute lookup |
+| `d.name` | real type attribute first; else `d["name"]` if key; else AttributeError |
 | `d.name = v` | `d["name"] = v` |
 | `del d.name` | delete key `"name"`; `AttributeError` if absent |
-| `d.items` (key `"items"` exists) | **the key's value** (keys win) |
+| `d.items` (key `"items"` exists) | the **dict method** (type attribute wins, I-024) |
 | `dict.items(d)` | the mapping view |
 
 ## repr / str (FR-010)

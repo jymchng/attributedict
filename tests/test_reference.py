@@ -95,30 +95,25 @@ def test_fr005_attr_delete_missing_raises_attribute_error():
 
 
 # ---------------------------------------------------------------------------
-# FR-006 — keys win over methods
+# FR-006 — real dict attributes win on the attribute path; mapping keeps keys
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("name", ["items", "keys", "values", "get", "update", "copy"])
-def test_fr006_keys_win(name):
+def test_fr006_type_attribute_wins_on_attribute_path(name):
     d = AttributeDict({name: 42})
-    assert getattr(d, name) == 42
+    assert callable(getattr(d, name)), name
+    assert d[name] == 42, name
 
 
-def test_fr006_dict_items_still_reachable():
+def test_fr006_dict_items_method_and_key_value():
     d = AttributeDict({"items": 42})
-    assert d.items == 42
-    # The mapping view remains reachable through the base dict API.
+    assert callable(d.items)
+    assert list(d.items()) == [("items", 42)]
+    assert d["items"] == 42
     view = dict.items(d)
     assert isinstance(view, type({}.items()))
     assert dict(view) == {"items": 42}
-
-
-def test_fr006_no_key_falls_back_to_method():
-    d = AttributeDict(a=1)
-    assert callable(d.items)
-    assert callable(d.keys)
-    assert callable(d.get)
 
 
 # ---------------------------------------------------------------------------

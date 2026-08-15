@@ -47,14 +47,17 @@ KeyError semantics but surface as AttributeError; see decisions) when absent.
 **AC**: after `del d.foo`, `"foo" not in d`.
 
 ### FR-006 — Key/method collision resolution — **keys win**
-When a key name equals a real type attribute or method, the **key's value
-wins** (user's final decision). `d = AttributeDict({"items": 42})` → `d.items
-== 42`; the bound `dict.items` method is reachable via the mapping protocol
-only (`dict.items(d)`). Resolution order: mapping key first (if present and
-the name is an attribute-usable string), else normal type attribute lookup.
+When a key name equals a real type attribute or method, the **real type
+attribute wins on the attribute path** (I-024; supersedes the earlier
+"keys win" decision D-004). `d = AttributeDict({"items": 42})` → `d.items`
+is the bound `dict.items` method; the key's value is reachable via mapping
+access (`d["items"] == 42`) and via `dict.items(d)`. Resolution order:
+(1) real type attribute lookup; (2) else mapping-key lookup (identifier
+keys only); (3) else AttributeError.
 
-**AC**: `d.items == 42`; `dict.items(d)` is the bound method; documented +
-tested for `keys`, `values`, `get`, `update`, `copy`, descriptors, dunders.
+**AC**: `callable(d.items)` and `d["items"] == 42`; `dict.items(d)` is the
+mapping view; documented + tested for `keys`, `values`, `get`, `update`,
+`copy`, descriptors, dunders.
 
 ### FR-007 — Recursive nested conversion
 At construction, recursively convert contained `dict` instances (and dicts

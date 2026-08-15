@@ -12,15 +12,16 @@ d["with-space"]   # 1
 d.with-space      # SyntaxError — use d["with-space"]
 ```
 
-## `d.items` returns a value instead of the method
+## `d.items` is a method, but I wanted the key's value
 
-Keys win (FR-006). If a key named `items`/`keys`/`get`/`update`/`copy`
-exists, attribute access returns the key's value. Use the base-dict API for
-the method:
+Real dict attributes win on the attribute path (FR-006, I-024). If a key
+named `items`/`keys`/`get`/`update`/`copy` exists, `d.items` returns the
+dict method; use **mapping access** for the key's value:
 
 ```python
 d = AttributeDict(items=42)
-d.items          # 42
+d.items          # <built-in method items ...>
+d["items"]       # 42
 dict.items(d)    # dict_items([('items', 42)])
 ```
 

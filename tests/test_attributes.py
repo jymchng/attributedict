@@ -69,29 +69,32 @@ def test_fr005_attr_delete_vs_mapping_delete():
 
 
 # ---------------------------------------------------------------------------
-# FR-006 — keys win over methods
+# FR-006 — real dict attributes win on the attribute path; mapping keeps keys
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("name", ["items", "keys", "values", "get", "update", "copy"])
-def test_fr006_keys_win(name):
+def test_fr006_type_attribute_wins_on_attribute_path(name):
     d = AttributeDict({name: 42})
-    assert getattr(d, name) == 42
+    # attribute access returns the real dict method (I-024)
+    assert callable(getattr(d, name)), name
+    # mapping access keeps the key's value
+    assert d[name] == 42, name
 
 
-def test_fr006_dict_items_view_reachable():
+def test_fr006_dict_items_method_and_key_value():
     d = AttributeDict({"items": 42})
-    assert d.items == 42
+    assert callable(d.items)
+    assert list(d.items()) == [("items", 42)]
+    assert d["items"] == 42
     view = dict.items(d)
     assert isinstance(view, type({}.items()))
     assert dict(view) == {"items": 42}
 
 
-def test_fr006_no_key_falls_back_to_method():
-    d = AttributeDict(a=1)
-    assert callable(d.items)
-    assert callable(d.keys)
-    assert callable(d.get)
+def test_fr006_non_type_key_still_reachable_as_attribute():
+    d = AttributeDict(host="localhost")
+    assert d.host == "localhost"
 
 
 def test_fr006_dunder_and_underscore_keys():

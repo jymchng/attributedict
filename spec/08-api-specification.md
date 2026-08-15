@@ -41,7 +41,7 @@ dicts and dicts inside lists/tuples.
 | `d.name` | if `"name"` is a key → `d["name"]`; else GenericGetAttr → AttributeError if missing |
 | `d.name = v` | `d["name"] = v` |
 | `del d.name` | delete key `"name"`; AttributeError if absent |
-| `d.items` (key "items" exists) | **key's value** (keys-win, FR-006) |
+| `d.items` (key "items" exists) | **the dict method** (type attribute wins, I-024) |
 | `dict.items(d)` | bound method |
 
 Resolution order documented in 05-system-architecture.

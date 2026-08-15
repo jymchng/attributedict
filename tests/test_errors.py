@@ -87,7 +87,8 @@ def test_del_missing_attr_message():
 # FR-014 — edge-case key matrix (attribute vs mapping access)
 # ---------------------------------------------------------------------------
 
-IDENTIFIER_KEYS = ["normal", "_private", "__dunder__", "items", "keys", "get"]
+IDENTIFIER_KEYS = ["normal", "_private", "__dunder__"]
+METHOD_NAME_KEYS = ["items", "keys", "values", "get", "update", "copy"]
 NON_IDENTIFIER_KEYS = ["with-space", "123", "foo-bar", ""]
 
 
@@ -95,6 +96,14 @@ NON_IDENTIFIER_KEYS = ["with-space", "123", "foo-bar", ""]
 def test_identifier_keys_attribute_access(key):
     d = AttributeDict({key: "v"})
     assert getattr(d, key) == "v"
+    assert d[key] == "v"
+
+
+@pytest.mark.parametrize("key", METHOD_NAME_KEYS)
+def test_method_name_keys_attribute_returns_method(key):
+    d = AttributeDict({key: "v"})
+    # I-024: attribute access returns the real dict method; mapping keeps key
+    assert callable(getattr(d, key)), key
     assert d[key] == "v"
 
 

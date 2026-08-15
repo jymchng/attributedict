@@ -1,19 +1,22 @@
 # FAQ
 
-## Why does a key named `items`/`keys`/`get` shadow the method?
+## Why does `d.items` read as a method even when a key `"items"` exists?
 
-**Keys win** (FR-006, D-004). `AttributeDict` is designed so that attribute
-access reads the mapping first, which makes data-key access predictable:
+**Real dict attributes win on the attribute path** (FR-006, I-024). `AttributeDict`
+is designed so attribute access behaves like a plain `dict` for type
+attributes, while mapping access still returns key values:
 
 ```python
 d = AttributeDict(items=42)
-d.items        # 42
-dict.items(d)  # dict_items([('items', 42)]) — the mapping view
+d.items          # <built-in method items ...> — the real dict method
+list(d.items())  # [('items', 42)]
+d["items"]       # 42 — mapping access keeps the key's value
+dict.items(d)    # dict_items([('items', 42)]) — the mapping view
 ```
 
-This is a deliberate deviation from plain `dict`, documented in
-[attribute-semantics](attribute-semantics.md). The base-dict API remains
-reachable via `dict.<method>(d)`.
+This is documented in [attribute-semantics](attribute-semantics.md). The
+attribute path and the mapping path are intentionally asymmetric: attributes
+read type members; `d[...]` reads keys.
 
 ## Why does `del d.missing` raise `AttributeError` but `del d["missing"]` raises `KeyError`?
 

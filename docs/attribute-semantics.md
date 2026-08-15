@@ -2,22 +2,28 @@
 
 ## Resolution order (FR-003/006)
 
-Attribute access on `AttributeDict` follows a **keys-win** order:
+Attribute access on `AttributeDict` prefers **real type attributes** first
+(I-024), then falls back to the mapping key:
 
-1. If the attribute name is a `str` that is a valid Python identifier **and**
-   a key in the mapping, return the key's value.
-2. Otherwise fall back to normal attribute lookup (type attributes,
-   descriptors, methods, dunders).
+1. Look up the name as a **real type attribute** (methods, descriptors,
+   dunders, etc.) via the normal attribute machinery. If found, return it.
+2. Otherwise, if the name is a `str` that is a valid Python identifier
+   **and** a key in the mapping, return the key's value.
 3. If neither exists, raise `AttributeError`.
 
-Consequence (FR-006): a key named `items`, `keys`, `values`, `get`, `update`,
-or `copy` shadows the corresponding method:
+Consequence (FR-006, I-024): a key named `items`, `keys`, `values`, `get`,
+`update`, or `copy` does **not** shadow the method on the *attribute* path:
 
 ```python
 d = AttributeDict(items=42)
-d.items        # 42 (the key)
+d.items        # <built-in method items ...> — the real dict method
+list(d.items())  # [('items', 42)]
+d["items"]     # 42 — mapping access keeps the key's value
 dict.items(d)  # dict_items([('items', 42)]) — the mapping view
 ```
+
+Mapping access (`d[name]`, `d[name] = v`, `del d[name]`) is untouched and
+always operates on keys.
 
 ## Attribute set / delete (FR-004/005)
 
@@ -29,21 +35,22 @@ dict.items(d)  # dict_items([('items', 42)]) — the mapping view
 
 | Key | Mapping access | Attribute access |
 |---|---|---|
-| `"normal"` | yes | yes |
+| `"normal"` | yes | yes (key value) |
 | `"with-space"` | yes | no (`AttributeError`) |
 | `"123"` | yes | no |
-| `"_private"` | yes | yes (keys win when present) |
+| `"_private"` | yes | yes (key value, when not a type attribute) |
 | `"__dunder__"` | yes | yes* (see note) |
-| `"items"`/`"keys"`/`"get"` | yes | key wins when present |
+| `"items"`/`"keys"`/`"get"` | yes | the dict **method** (I-024) |
 | `"foo-bar"` / `""` | yes | no |
 | non-str (`1`, `None`, `object()`, `(1, 2)`) | yes | no |
 
 \* `__dunder__` keys are addressable via attribute syntax only when they do
 not collide with real type internals; behavior is tested.
 
-## Why "keys win"?
+## Why "type attributes win"?
 
-See [decisions](../spec/decisions.md) (D-004) and the [FAQ](faq.md): keys winning over
-methods is an intentional deviation from plain `dict` that makes
-attribute-style access to data keys predictable. The mapping view remains
-reachable via the base `dict` API (`dict.items(d)`, `dict.get(d, ...)`).
+See [decisions](../spec/decisions.md) (D-004, I-024) and the [FAQ](faq.md):
+real `dict` attributes (methods/descriptors) win on the attribute path so
+`d.items` reads as a method exactly like a plain `dict`, while mapping access
+still returns key values. The two paths are intentionally asymmetric and
+documented.
