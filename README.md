@@ -76,10 +76,13 @@ settings.database.ports[1].tls  # True
 ## Installation
 
 ```bash
-pip install attributedict
+pip install py-attributedict
 ```
 
 This installs the `cp39-abi3` wheel for your platform (or builds from source).
+The import name is `attributedict` (the distribution is published as
+`py-attributedict` because the plain names `attributedict` / `attrdict` are
+taken on PyPI by unrelated projects).
 
 ## Key highlights
 

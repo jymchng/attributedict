@@ -107,8 +107,9 @@ YAML/dataclass interop.
 
 ## 6. Reproducibility
 
-- `python -m build` from a clean tree produces `attributedict-0.1.0.tar.gz`
-  and `attributedict-0.1.0-cp39-abi3-linux_x86_64.whl`.
+- `python -m build` from a clean tree produces `py_attributedict-<version>.tar.gz`
+  and `py_attributedict-<version>-cp39-abi3-linux_x86_64.whl` (version derived
+  from git tags by setuptools-scm, D-005).
 - The abi3 wheel installs and passes a smoke test in a fresh venv
   (verified this audit).
 - Benchmarks committed as data (`benchmarks/results/results.json`) with
@@ -116,8 +117,7 @@ YAML/dataclass interop.
 
 ## 7. Version / Platform / ABI / Performance / Security Summary
 
-- **Supported:** CPython 3.9–3.14; manylinux x86_64/aarch64, macOS
-  arm64/x86_64, Windows x86_64 (wheels.yml matrix).
+- **Supported:** CPython 3.9–3.14; manylinux x86_64/aarch64/i686/ppc64le/s390x/armv7l, macOS arm64/x86_64, Windows AMD64/ARM64/x86 (wheels.yml matrix).
 - **Unsupported:** PyPy, free-threaded 3.13t.
 - **ABI:** Limited API / Stable ABI (`cp39-abi3`); `PyObject_VisitManagedDict`
   is NOT public (R-001) — portable `Py_VISIT`/`Py_CLEAR` used.
