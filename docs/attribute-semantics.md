@@ -43,7 +43,7 @@ not collide with real type internals; behavior is tested.
 
 ## Why "keys win"?
 
-See [decisions](decisions.md) (D-004) and the [FAQ](faq.md): keys winning over
+See [decisions](../spec/decisions.md) (D-004) and the [FAQ](faq.md): keys winning over
 methods is an intentional deviation from plain `dict` that makes
 attribute-style access to data keys predictable. The mapping view remains
 reachable via the base `dict` API (`dict.items(d)`, `dict.get(d, ...)`).
