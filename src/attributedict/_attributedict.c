@@ -397,8 +397,87 @@ static PyMethodDef AttributeDict_methods[] = {
     {NULL, NULL, 0, NULL},
 };
 
-/* Repr placeholder until I-009: use dict's repr semantics by delegating to
- * the base tp_repr via the generic path. (Overridden in I-009.) */
+/* Repr (FR-010): produce "AttributeDict({...})".
+ *
+ * Cycle handling mirrors dict: use Py_ReprEnter/Py_ReprLeave so recursive
+ * structures render with "..." instead of recursing forever.
+ */
+static PyObject *
+AttributeDict_repr(AttributeDictObject *self)
+{
+    if (Py_ReprEnter((PyObject *)self) != 0) {
+        /* Already in progress: recursive reference -> "...". */
+        return PyUnicode_FromString("AttributeDict({...})");
+    }
+
+    PyObject *keys = PyDict_Keys((PyObject *)self);
+    if (keys == NULL) {
+        Py_ReprLeave((PyObject *)self);
+        return NULL;
+    }
+    Py_ssize_t n = PyList_GET_SIZE(keys);
+
+    PyObject *parts = PyList_New(n);
+    if (parts == NULL) {
+        Py_DECREF(keys);
+        Py_ReprLeave((PyObject *)self);
+        return NULL;
+    }
+
+    for (Py_ssize_t i = 0; i < n; i++) {
+        PyObject *k = PyList_GET_ITEM(keys, i);
+        PyObject *v = PyDict_GetItemWithError((PyObject *)self, k);
+        if (v == NULL) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_RuntimeError, "key vanished during repr");
+            }
+            Py_DECREF(keys);
+            Py_DECREF(parts);
+            Py_ReprLeave((PyObject *)self);
+            return NULL;
+        }
+        PyObject *kr = PyObject_Repr(k);
+        PyObject *vr = PyObject_Repr(v);
+        if (kr == NULL || vr == NULL) {
+            Py_XDECREF(kr);
+            Py_XDECREF(vr);
+            Py_DECREF(keys);
+            Py_DECREF(parts);
+            Py_ReprLeave((PyObject *)self);
+            return NULL;
+        }
+        PyObject *item = PyUnicode_FromFormat("%U: %U", kr, vr);
+        Py_DECREF(kr);
+        Py_DECREF(vr);
+        if (item == NULL) {
+            Py_DECREF(keys);
+            Py_DECREF(parts);
+            Py_ReprLeave((PyObject *)self);
+            return NULL;
+        }
+        PyList_SET_ITEM(parts, i, item);  /* steals */
+    }
+    Py_DECREF(keys);
+
+    PyObject *sep = PyUnicode_FromString(", ");
+    if (sep == NULL) {
+        Py_DECREF(parts);
+        Py_ReprLeave((PyObject *)self);
+        return NULL;
+    }
+    PyObject *body = PyUnicode_Join(sep, parts);
+    Py_DECREF(sep);
+    Py_DECREF(parts);
+    if (body == NULL) {
+        Py_ReprLeave((PyObject *)self);
+        return NULL;
+    }
+
+    PyObject *result = PyUnicode_FromFormat("AttributeDict({%U})", body);
+    Py_DECREF(body);
+    Py_ReprLeave((PyObject *)self);
+    return result;
+}
 
 PyDoc_STRVAR(attributedict_doc,
 "AttributeDict(dict) -- a dict subclass whose keys are also accessible\n"
@@ -409,6 +488,7 @@ static PyTypeObject AttributeDict_Type = {
     .tp_name = "attributedict._attributedict.AttributeDict",
     .tp_basicsize = sizeof(AttributeDictObject),
     .tp_dealloc = (destructor)AttributeDict_dealloc,
+    .tp_repr = (reprfunc)AttributeDict_repr,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
     .tp_doc = attributedict_doc,
     .tp_traverse = (traverseproc)AttributeDict_traverse,
