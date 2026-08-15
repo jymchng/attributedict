@@ -5,6 +5,39 @@ All notable changes to `attributedict` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-08-15
+
+### Added
+
+- `py-attributedict` distribution on PyPI (import stays `attributedict`);
+  published via trusted publishing (OIDC), no stored credentials.
+- Dynamic versioning via `setuptools-scm` (version derived from git tags;
+  `__version__` read at runtime through `importlib.metadata`).
+- Many-arch `cp39-abi3` wheel matrix: Linux manylinux
+  x86_64/aarch64/i686/ppc64le/s390x/armv7l (QEMU), macOS arm64/x86_64,
+  Windows AMD64/ARM64/x86; full matrix built on tag/release, cheap subset
+  on PRs.
+- MkDocs + Material documentation site deployed to GitHub Pages
+  (`https://jymchng.github.io/attributedict/`), project logo, and a
+  FastAPI-style README.
+
+### Changed
+
+- Attribute access now prefers real dict attributes on the attribute path
+  (`d.items` is the bound method) while mapping access keeps key values
+  (`d["items"] == 42`) — I-024 resolution-order change.
+- C-extension gcov coverage raised above 90% (test-only allocation-failure
+  injection behind `PY_ATTRIBUTEDICT_TESTING`); production wheels ship no
+  test hooks.
+- CI workflows hardened: coverage/sanitizers import path, modern-gcc gcov
+  parsing, libasan preload for ASan on non-instrumented CPython,
+  cibuildwheel v4.2.0 + AMD64/ARM64 Windows arch names.
+
+### Fixed
+
+- Real NULL-safety bug in `tp_repr` (`Py_ReprEnter`/`Py_ReprLeave` contract
+  on recursion-detected and error paths).
+
 ## [0.1.0] - 2026-08-15
 
 Initial release.
