@@ -76,8 +76,12 @@ fail_under = 80
 show_missing = true
 
 # --- cibuildwheel (I-015, PKG-006): abi3 wheels per platform ---
+# Build with CPython 3.9; setup.py tags the produced wheel cp39-abi3, which
+# is compatible with CPython 3.9+ (one wheel per platform). cibuildwheel 4.x
+# does not accept "abi3" as part of a build selector (identifiers are
+# <cpXY>-<platform>), so target cp39-* directly.
 [tool.cibuildwheel]
-build = "cp39-abi3-*"
+build = "cp39-*"
 archs = ["x86_64", "aarch64", "arm64", "auto64"]
 
 [tool.cibuildwheel.macos]
