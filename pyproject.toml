@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "attributedict"
+version = "0.1.0"
+description = "AttributeDict: a CPython C extension dict subclass with attribute access (d['host'] == d.host)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Jim Chng", email = "jymchng@hotmail.com" }]
+keywords = ["attributedict", "dict", "attribute", "mapping", "c-extension"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: C",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+# C-004: no third-party runtime dependencies.
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/jymchng/attributedict"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+packages = ["attributedict"]
+
+[tool.setuptools.package-data]
+attributedict = ["py.typed"]
+
+[[tool.setuptools.ext-modules]]
+name = "attributedict._attributedict"
+sources = ["src/attributedict/_attributedict.c"]
+
+# --- Development tooling (config only; tooling itself lands in I-016) ---
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
