@@ -370,6 +370,33 @@ AttributeDict_setattro(AttributeDictObject *self, PyObject *name,
     return 0;
 }
 
+/* copy() override (FR-009/013): the dict base's copy() returns a plain dict
+ * for subclasses; the spec requires AttributeDict-typed shallow copy. */
+static PyObject *
+AttributeDict_copy(AttributeDictObject *self, PyObject *Py_UNUSED(ignored))
+{
+    PyObject *nd = AttributeDict_NewEmpty();
+    if (nd == NULL) {
+        return NULL;
+    }
+    if (PyDict_Update(nd, (PyObject *)self) < 0) {
+        Py_DECREF(nd);
+        return NULL;
+    }
+    return nd;
+}
+
+PyDoc_STRVAR(attributedict_copy_doc,
+"copy() -> AttributeDict\n"
+"\n"
+"Return a shallow copy of the mapping as an AttributeDict.");
+
+static PyMethodDef AttributeDict_methods[] = {
+    {"copy", (PyCFunction)AttributeDict_copy, METH_NOARGS,
+     attributedict_copy_doc},
+    {NULL, NULL, 0, NULL},
+};
+
 /* Repr placeholder until I-009: use dict's repr semantics by delegating to
  * the base tp_repr via the generic path. (Overridden in I-009.) */
 
@@ -386,6 +413,7 @@ static PyTypeObject AttributeDict_Type = {
     .tp_doc = attributedict_doc,
     .tp_traverse = (traverseproc)AttributeDict_traverse,
     .tp_clear = (inquiry)AttributeDict_clear,
+    .tp_methods = AttributeDict_methods,
     .tp_getattro = (getattrofunc)AttributeDict_getattro,
     .tp_setattro = (setattrofunc)AttributeDict_setattro,
     .tp_init = (initproc)AttributeDict_init,
