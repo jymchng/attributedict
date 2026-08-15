@@ -57,17 +57,15 @@ AttributeDict_clear(AttributeDictObject *self)
     return 0;
 }
 
-/* Dealloc: delegate to the dict base dealloc (MEM-006). */
+/* Dealloc: delegate to the dict base dealloc (MEM-006).
+ *
+ * NOTE: call PyDict_Type.tp_dealloc directly (not Py_TYPE(self)->tp_base->tp_dealloc)
+ * to avoid infinite recursion when self is a subclass instance (subclass
+ * tp_base is AttributeDict_Type with tp_dealloc == this function). */
 static void
 AttributeDict_dealloc(AttributeDictObject *self)
 {
-    PyTypeObject *base = Py_TYPE(self)->tp_base;
-    if (base != NULL && base->tp_dealloc != NULL) {
-        base->tp_dealloc((PyObject *)self);
-    }
-    else {
-        PyObject_Del(self);
-    }
+    PyDict_Type.tp_dealloc((PyObject *)self);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -232,22 +230,31 @@ AttributeDict_ConvertValue(PyObject *value, PyObject *ctx)
 /* Construction (FR-002) + conversion (FR-007)                               */
 /* ------------------------------------------------------------------------ */
 
-/* tp_new delegates to the dict base, which handles every construction form:
- * (), (mapping), (iterable_of_pairs), (**kwargs), (mapping, **kwargs). */
+/* tp_new: delegate to the dict base (PyDict_Type.tp_new), which handles
+ * every construction form: (), (mapping), (iterable_of_pairs), (**kwargs),
+ * (mapping, **kwargs).
+ *
+ * NOTE: call PyDict_Type.tp_new directly (not type->tp_base->tp_new) to
+ * avoid infinite recursion when *type* is a subclass of AttributeDict
+ * (whose tp_base is AttributeDict_Type with tp_new == this function). */
 static PyObject *
 AttributeDict_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    return type->tp_base->tp_new(type, args, kwds);
+    return PyDict_Type.tp_new(type, args, kwds);
 }
 
 /* tp_init: run the base init (populates self per FR-002), then convert all
- * contained values recursively in place (FR-007), cycle-safe. */
+ * contained values recursively in place (FR-007), cycle-safe.
+ *
+ * NOTE: call PyDict_Type.tp_init directly (not Py_TYPE(self)->tp_base->tp_init)
+ * to avoid infinite recursion when self is an instance of a *subclass* of
+ * AttributeDict (the subclass's tp_base is AttributeDict_Type, whose tp_init
+ * is this function). */
 static int
 AttributeDict_init(AttributeDictObject *self, PyObject *args, PyObject *kwds)
 {
-    PyTypeObject *base = Py_TYPE(self)->tp_base;
-    if (base->tp_init != NULL) {
-        if (base->tp_init((PyObject *)self, args, kwds) < 0) {
+    if (PyDict_Type.tp_init != NULL) {
+        if (PyDict_Type.tp_init((PyObject *)self, args, kwds) < 0) {
             return -1;
         }
     }
