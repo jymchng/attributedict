@@ -139,11 +139,16 @@ jobs:
           python -m pip install --upgrade pip
           installed=0
           for whl in dist/*.whl; do
+            # Only Linux x86_64 wheels are installable on this runner.
             case "$whl" in
+              *macosx*|*win_amd64*|*win32*|*win_arm64*)
+                echo "SKIPPED (non-Linux): $whl"
+                continue
+                ;;
               *x86_64*.whl)
                 ;;
               *)
-                echo "SKIPPED (not installable on this x86_64 ubuntu runner): $whl"
+                echo "SKIPPED (non-x86_64): $whl"
                 continue
                 ;;
             esac
