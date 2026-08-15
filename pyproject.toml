@@ -9,7 +9,7 @@ description = "AttributeDict: a CPython C extension dict subclass with attribute
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "Jim Chng", email = "jymchng@hotmail.com" }]
+authors = [{ name = "Jim Chng", email = "jimchng@hotmail.com" }]
 keywords = ["attributedict", "dict", "attribute", "mapping", "c-extension"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -37,10 +37,6 @@ packages = ["attributedict"]
 
 [tool.setuptools.package-data]
 attributedict = ["py.typed"]
-
-[[tool.setuptools.ext-modules]]
-name = "attributedict._attributedict"
-sources = ["src/attributedict/_attributedict.c"]
 
 # --- Development tooling (config only; tooling itself lands in I-016) ---
 

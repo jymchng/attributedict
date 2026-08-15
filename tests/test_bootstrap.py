@@ -25,3 +25,11 @@ def test_c_extension_module_importable():
     import attributedict._attributedict as cmod
 
     assert cmod.__name__ == "attributedict._attributedict"
+
+
+def test_c_type_is_public_type():
+    import attributedict._attributedict as cmod
+
+    # FR-001: the public name is the C type (no Python stub once I-005 lands).
+    assert attributedict.AttributeDict is cmod.AttributeDict
+    assert attributedict.AttributeDict.__bases__ == (dict,)
