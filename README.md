@@ -4,7 +4,7 @@
 [![Lint](https://github.com/jymchng/attributedict/actions/workflows/lint.yml/badge.svg)](https://github.com/jymchng/attributedict/actions/workflows/lint.yml)
 [![Wheels](https://github.com/jymchng/attributedict/actions/workflows/wheels.yml/badge.svg)](https://github.com/jymchng/attributedict/actions/workflows/wheels.yml)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg)](docs/installation.md)
-[![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)](docs/compatibility.md)
+[![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen.svg)](docs/performance.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A production-quality **CPython C extension** implementing an `AttributeDict`:
@@ -51,11 +51,13 @@ in v1. See [docs/installation.md](docs/installation.md).
 
 ## Documentation
 
+Full documentation is published at **<https://jymchng.github.io/attributedict/>** (MkDocs + Material).
+
 | Topic | Doc |
 |---|---|
 | Quickstart | [docs/quickstart.md](docs/quickstart.md) |
 | API reference | [docs/api.md](docs/api.md) |
-| Attribute semantics (keys win) | [docs/attribute-semantics.md](docs/attribute-semantics.md) |
+| Attribute semantics | [docs/attribute-semantics.md](docs/attribute-semantics.md) |
 | Mapping semantics | [docs/mapping-semantics.md](docs/mapping-semantics.md) |
 | Nested conversion | [docs/nested.md](docs/nested.md) |
 | Serialization | [docs/serialization.md](docs/serialization.md) |

@@ -25,6 +25,10 @@ htmlcov/
 hypothesis/
 .benchmarks/
 
+# Docs site (MkDocs)
+site/
+_site/
+
 # C coverage (gcov/lcov)
 *.gcda
 *.gcno

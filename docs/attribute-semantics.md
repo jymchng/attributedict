@@ -49,7 +49,8 @@ not collide with real type internals; behavior is tested.
 
 ## Why "type attributes win"?
 
-See [decisions](../spec/decisions.md) (D-004, I-024) and the [FAQ](faq.md):
+See the [decisions](https://github.com/jymchng/attributedict/blob/main/spec/decisions.md)
+(D-004, I-024) and the [FAQ](faq.md):
 real `dict` attributes (methods/descriptors) win on the attribute path so
 `d.items` reads as a method exactly like a plain `dict`, while mapping access
 still returns key values. The two paths are intentionally asymmetric and
