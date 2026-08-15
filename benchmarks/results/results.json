@@ -1,0 +1,132 @@
+{
+  "environment": {
+    "python": "3.13.13",
+    "platform": "Linux-7.0.0-14-generic-x86_64-with-glibc2.43",
+    "machine": "x86_64",
+    "cpu": "unknown",
+    "loop_iterations": 100000,
+    "repeat": 5
+  },
+  "results": [
+    {
+      "name": "construct_kwargs_dict",
+      "mean_us_per_op": 3.015,
+      "median_us_per_op": 2.924
+    },
+    {
+      "name": "construct_kwargs_ref",
+      "mean_us_per_op": 33.495,
+      "median_us_per_op": 33.58
+    },
+    {
+      "name": "construct_kwargs_c",
+      "mean_us_per_op": 3.421,
+      "median_us_per_op": 3.325
+    },
+    {
+      "name": "construct_mapping_dict",
+      "mean_us_per_op": 0.508,
+      "median_us_per_op": 0.472
+    },
+    {
+      "name": "construct_mapping_ref",
+      "mean_us_per_op": 29.974,
+      "median_us_per_op": 29.885
+    },
+    {
+      "name": "construct_mapping_c",
+      "mean_us_per_op": 3.126,
+      "median_us_per_op": 3.104
+    },
+    {
+      "name": "construct_nested_ref",
+      "mean_us_per_op": 8.765,
+      "median_us_per_op": 8.756
+    },
+    {
+      "name": "construct_nested_c",
+      "mean_us_per_op": 2.577,
+      "median_us_per_op": 2.558
+    },
+    {
+      "name": "getitem_dict",
+      "mean_us_per_op": 0.074,
+      "median_us_per_op": 0.074
+    },
+    {
+      "name": "getitem_ref",
+      "mean_us_per_op": 0.09,
+      "median_us_per_op": 0.068
+    },
+    {
+      "name": "getitem_c",
+      "mean_us_per_op": 0.066,
+      "median_us_per_op": 0.057
+    },
+    {
+      "name": "getattr_ref",
+      "mean_us_per_op": 0.234,
+      "median_us_per_op": 0.208
+    },
+    {
+      "name": "getattr_c",
+      "mean_us_per_op": 0.071,
+      "median_us_per_op": 0.069
+    },
+    {
+      "name": "setitem_dict",
+      "mean_us_per_op": 0.105,
+      "median_us_per_op": 0.105
+    },
+    {
+      "name": "setitem_ref",
+      "mean_us_per_op": 0.119,
+      "median_us_per_op": 0.117
+    },
+    {
+      "name": "setitem_c",
+      "mean_us_per_op": 0.117,
+      "median_us_per_op": 0.116
+    },
+    {
+      "name": "setattr_ref",
+      "mean_us_per_op": 0.612,
+      "median_us_per_op": 0.582
+    },
+    {
+      "name": "setattr_c",
+      "mean_us_per_op": 0.114,
+      "median_us_per_op": 0.114
+    },
+    {
+      "name": "iter_dict",
+      "mean_us_per_op": 0.482,
+      "median_us_per_op": 0.479
+    },
+    {
+      "name": "iter_ref",
+      "mean_us_per_op": 0.678,
+      "median_us_per_op": 0.657
+    },
+    {
+      "name": "iter_c",
+      "mean_us_per_op": 0.693,
+      "median_us_per_op": 0.675
+    },
+    {
+      "name": "copy_dict",
+      "mean_us_per_op": 1.764,
+      "median_us_per_op": 1.719
+    },
+    {
+      "name": "copy_ref",
+      "mean_us_per_op": 31.945,
+      "median_us_per_op": 31.498
+    },
+    {
+      "name": "copy_c",
+      "mean_us_per_op": 1.889,
+      "median_us_per_op": 1.827
+    }
+  ]
+}
