@@ -141,6 +141,9 @@ jobs:
         env:
           CIBW_PLATFORM: pyodide
           CIBW_BUILD: cp313-pyodide_wasm32
+          # Override [tool.cibuildwheel] archs (native archs are invalid for
+          # pyodide; wasm32 is the only supported arch).
+          CIBW_ARCHS: wasm32
         uses: pypa/cibuildwheel@v4.2.0
         with:
           output-dir: dist
