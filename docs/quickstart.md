@@ -1,7 +1,8 @@
 # Quickstart
 
 `attributedict` gives you a `dict` whose keys are also accessible as
-attributes.
+attributes. Sounds fancy? It's really just a dict that's friendlier to
+type.
 
 ```python
 from attributedict import AttributeDict
@@ -50,13 +51,14 @@ deep = copy.deepcopy(config)      # AttributeDict (deep)
 loaded = pickle.loads(pickle.dumps(config))  # round-trips
 ```
 
-## Important: keys win
+## Important: type attributes win
 
-A key named like a method shadows it:
+A key named like a method doesn't shadow it on the attribute path:
 
 ```python
 d = AttributeDict(items=42)
-d.items        # 42  (the key's value)
+d.items        # <built-in method items ...> — the real dict method
+d["items"]     # 42 — mapping access keeps the key's value
 dict.items(d)  # dict_items([('items', 42)]) — the mapping view
 ```
 

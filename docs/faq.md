@@ -2,9 +2,9 @@
 
 ## Why does `d.items` read as a method even when a key `"items"` exists?
 
-**Real dict attributes win on the attribute path** (FR-006, I-024). `AttributeDict`
-is designed so attribute access behaves like a plain `dict` for type
-attributes, while mapping access still returns key values:
+**Real dict attributes win on the attribute path** (FR-006, I-024).
+`AttributeDict` is designed so attribute access behaves like a plain `dict`
+for type attributes, while mapping access still returns key values:
 
 ```python
 d = AttributeDict(items=42)
@@ -33,14 +33,14 @@ mapping syntax only (`d["with-space"]`); attribute syntax raises
 
 ## Is `AttributeDict` a real `dict`?
 
-Yes — it is a C subclass of `dict`, so `isinstance(d, dict)` is `True`
+Yes — it's a C subclass of `dict`, so `isinstance(d, dict)` is `True`
 (C-002) and it inherits the full mapping protocol and dict methods.
 
 ## Is `AttributeDict` hashable?
 
-No. Like `dict`, it is unhashable (FR-012).
+No. Like `dict`, it's unhashable (FR-012).
 
 ## Which Python versions are supported?
 
 CPython 3.9–3.14 via a single `cp39-abi3` wheel per platform. PyPy and
-free-threaded CPython 3.13t are not supported in v1 (NFR-001, DOC-004).
+free-threaded CPython 3.13t aren't supported in v1 (NFR-001, DOC-004).

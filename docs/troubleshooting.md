@@ -42,13 +42,13 @@ del d.missing      # AttributeError (documented deviation)
 ## Pickling fails on a C-extension environment
 
 Pickle round-trips are supported across all protocols (0–5). If you see
-`AttributeError: can't set attribute` on unpickle, ensure you import
+`AttributeError: can't set attribute` on unpickle, make sure you import
 `attributedict` before unpickling (the `__reduce__` helper lives in
 `attributedict._pickle_support`).
 
 ## A subclass of `AttributeDict` hangs or recurses
 
-This was a real bug in early versions (R-004), fixed in I-013. Upgrade to a
+That was a real bug in early versions (R-004), fixed in I-013. Upgrade to a
 version that includes the fix; if you still see recursion, please open an
 issue with a minimal repro.
 

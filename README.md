@@ -8,8 +8,8 @@
 
 <p align="center">
   <b>dict semantics with attribute access.</b><br>
-  A production-quality <b>CPython C extension</b> implementing an <code>AttributeDict</code> —
-  a <code>dict</code> subclass whose keys are also accessible through attribute syntax.
+  A production-quality <b>CPython C extension</b> implementing an <code>AttributeDict</code> —<br>
+  a real <code>dict</code> whose keys you can also reach with dot notation.
 </p>
 
 <p align="center">
@@ -29,6 +29,8 @@
 ---
 
 ## Example
+
+Here's what it feels like to use:
 
 ```python
 from attributedict import AttributeDict
@@ -81,9 +83,9 @@ pip install py-attributedict
 ```
 
 This installs the `cp39-abi3` wheel for your platform (or builds from source).
-The import name is `attributedict` (the distribution is published as
-`py-attributedict` because the plain names `attributedict` / `attrdict` are
-taken on PyPI by unrelated projects).
+Quick note on naming: you import `attributedict`, but the package on PyPI is
+`py-attributedict` — the plain names `attributedict` / `attrdict` were
+already taken on PyPI by unrelated projects.
 
 ## Key highlights
 
@@ -126,12 +128,12 @@ nox -s coverage    # coverage (>= 80%)
 nox -s build       # sdist + abi3 wheel
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and
+Want to contribute? See [CONTRIBUTING.md](CONTRIBUTING.md) and
 [docs/development.md](docs/development.md).
 
 ## Security
 
-See [SECURITY.md](SECURITY.md).
+Found something? See [SECURITY.md](SECURITY.md).
 
 ## License
 

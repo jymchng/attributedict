@@ -4,8 +4,8 @@
 
 `AttributeDict` is a C subclass of `dict`, so the full mapping protocol is
 inherited: `len(d)`, `iter(d)`, `d[key]`, `d[key] = v`, `del d[key]`,
-`key in d`. `isinstance(d, dict)` and `isinstance(d, MutableMapping)` are
-both true.
+`key in d`. Both `isinstance(d, dict)` and `isinstance(d, MutableMapping)`
+are true — no surprises there.
 
 ## dict methods (FR-009)
 
@@ -33,10 +33,12 @@ dict.items(d)  # dict_items([('items', 42)]) — the mapping view
 ```
 
 Mapping access (`d[name]`, `d[name] = v`) always operates on keys. The
-mapping view and base methods remain reachable via `dict.<method>(d)`.
+mapping view and base methods stay reachable via `dict.<method>(d)`.
 
 ## Deviation from `dict`
 
 - `copy()` returns `AttributeDict` (dict's C `copy` for subclasses also
   returns the subclass; this is documented and tested).
-- Keys win over methods (see [attribute-semantics](attribute-semantics.md)).
+- Keys win over methods on the *mapping* path — well, more precisely, the
+  type's real attributes win on the *attribute* path (see
+  [attribute-semantics](attribute-semantics.md)).

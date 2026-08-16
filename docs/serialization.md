@@ -4,7 +4,7 @@
 
 - `copy.copy(d)` returns a shallow `AttributeDict` (nested values shared).
 - `copy.deepcopy(d)` returns a deep `AttributeDict`; nested `AttributeDict`
-  instances remain `AttributeDict`. Self-references and cycles terminate and
+  instances stay `AttributeDict`. Self-references and cycles terminate and
   are preserved.
 
 ```python
@@ -28,7 +28,7 @@ loaded = pickle.loads(pickle.dumps(d))
 # type(loaded) is AttributeDict; type(loaded.nested) is AttributeDict
 ```
 
-Implementation: `AttributeDict.__reduce__` returns
+How it works: `AttributeDict.__reduce__` returns
 `(reconstruct, (cls,), None, None, iter(self.items()))` — the 5-tuple form
 lets pickle apply items lazily through its memo, so cyclic structures pickle
 without recursion. `attributedict._pickle_support.reconstruct` creates the
@@ -36,7 +36,7 @@ empty instance.
 
 ## JSON / YAML / dataclasses
 
-Not part of v1 (A-008). Use `dict(d)` to convert to a plain dict for JSON:
+Not part of v1 (A-008). Want JSON? Just convert to a plain dict first:
 
 ```python
 import json

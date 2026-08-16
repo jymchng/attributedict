@@ -11,8 +11,9 @@ Attribute access on `AttributeDict` prefers **real type attributes** first
    **and** a key in the mapping, return the key's value.
 3. If neither exists, raise `AttributeError`.
 
-Consequence (FR-006, I-024): a key named `items`, `keys`, `values`, `get`,
-`update`, or `copy` does **not** shadow the method on the *attribute* path:
+Here's the practical upshot (FR-006, I-024): a key named `items`, `keys`,
+`values`, `get`, `update`, or `copy` does **not** shadow the method on the
+*attribute* path:
 
 ```python
 d = AttributeDict(items=42)
@@ -44,14 +45,14 @@ always operates on keys.
 | `"foo-bar"` / `""` | yes | no |
 | non-str (`1`, `None`, `object()`, `(1, 2)`) | yes | no |
 
-\* `__dunder__` keys are addressable via attribute syntax only when they do
-not collide with real type internals; behavior is tested.
+\* `__dunder__` keys are addressable via attribute syntax only when they don't
+collide with real type internals; the behavior is tested.
 
 ## Why "type attributes win"?
 
 See the [decisions](https://github.com/jymchng/attributedict/blob/main/spec/decisions.md)
-(D-004, I-024) and the [FAQ](faq.md):
-real `dict` attributes (methods/descriptors) win on the attribute path so
-`d.items` reads as a method exactly like a plain `dict`, while mapping access
-still returns key values. The two paths are intentionally asymmetric and
-documented.
+(D-004, I-024) and the [FAQ](faq.md). Short version: real `dict` attributes
+(methods/descriptors) win on the attribute path, so `d.items` reads as a
+method exactly like it does on a plain `dict`, while mapping access still
+returns key values. The two paths are intentionally asymmetric — and
+documented so you're never surprised.

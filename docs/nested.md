@@ -32,7 +32,7 @@ x.database.ports[1].tls  # True
 
 Conversion is cycle-safe (FR-007): a mapping that is being converted is
 reused rather than re-converted, so self-referential structures terminate
-and preserve the cycle:
+and the cycle is preserved:
 
 ```python
 inner = {}

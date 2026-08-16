@@ -6,7 +6,8 @@
 
 `attributedict` is a production-quality **CPython C extension** implementing
 an `AttributeDict`: a `dict` subclass whose keys are also accessible through
-attribute syntax.
+attribute syntax. In plain terms: you get a real dict that's also nice to
+read and write with dot notation.
 
 ```python
 from attributedict import AttributeDict

@@ -7,13 +7,12 @@ from attributedict import AttributeDict
 ```
 
 `__all__ == ["AttributeDict"]`. The C extension module
-`attributedict._attributedict` is an implementation detail and is not part of
+`attributedict._attributedict` is an implementation detail and isn't part of
 the public API.
 
 > **Reference oracle:** `attributedict._reference` contains a pure-Python
-> implementation of the same contract. It is used by the test suite and
-> benchmarks as the cross-check baseline; it is **not** the public import
-> path.
+> implementation of the same contract. The test suite and benchmarks use it
+> as the cross-check baseline; it is **not** the public import path.
 
 ## Construction (FR-002)
 
@@ -55,7 +54,7 @@ Nested values use their own repr; recursive structures render with `...`.
 ## Copy / pickle (FR-013)
 
 `copy.copy`, `copy.deepcopy`, `pickle.dumps/loads` are supported. Nested
-`AttributeDict` instances remain `AttributeDict`; self-references and cycles
+`AttributeDict` instances stay `AttributeDict`; self-references and cycles
 work.
 
 ## Errors (FR-015)
@@ -68,5 +67,5 @@ work.
 
 ## Typing
 
-`py.typed` is shipped. Attribute access cannot be fully represented
-statically; typing is best-effort and documented as such.
+`py.typed` is shipped. Attribute access can't be fully represented
+statically, so typing is best-effort — and honestly documented as such.
