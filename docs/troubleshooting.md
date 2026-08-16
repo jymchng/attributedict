@@ -12,6 +12,19 @@ d["with-space"] # 1
 d.with-space # SyntaxError — use d["with-space"]
 ```
 
+## `d.A` raises `AttributeError` even though `A` is a key
+
+If the key isn't a *string* (for example a class, an int, or a tuple),
+attribute syntax can't reach it — only mapping access can:
+
+```python
+class A: ...
+
+attr_d = AttributeDict({A: None})
+attr_d[A]   # None — mapping access works
+attr_d.A    # AttributeError — attribute syntax only reads string keys
+```
+
 ## `d.items` is a method, but I wanted the key's value
 
 Real dict attributes win on the attribute path. If a key

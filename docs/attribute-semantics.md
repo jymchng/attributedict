@@ -48,6 +48,26 @@ always operates on keys.
 \* `__dunder__` keys are addressable via attribute syntax only when they don't
 collide with real type internals; the behavior is tested.
 
+### Non-string keys: mapping only
+
+Keys don't have to be strings — `AttributeDict` accepts any hashable key,
+just like `dict`. But attribute syntax only understands string identifiers,
+so non-string keys are reachable **only** through mapping access:
+
+```python
+class A: ...
+
+attr_d = AttributeDict({A: None})
+
+attr_d[A]     # None  — mapping access: the class object is a valid key
+attr_d.A      # AttributeError: object has no attribute 'A'
+```
+
+In other words, `attr_d[A]` reads the key's value, while `attr_d.A` looks
+for a *string* attribute named `"A"` — which doesn't exist, so it raises
+`AttributeError`. Non-string keys are documented and tested (see the table
+above).
+
 ## Why "type attributes win"?
 
 See the [decisions](https://github.com/jymchng/attributedict/blob/main/spec/decisions.md)
