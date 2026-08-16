@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/jymchng/attributedict">
-    <img src="docs/assets/logo.png" alt="attributedict" width="120">
+    <img src="https://raw.githubusercontent.com/jymchng/attributedict/main/docs/assets/logo.png" alt="attributedict" width="120">
   </a>
 </p>
 
@@ -23,7 +23,8 @@
 
 ---
 
-**Documentation:** <https://jymchng.github.io/attributedict/>
+**Documentation:** [https://jymchng.github.io/attributedict/](https://jymchng.github.io/attributedict/) ·
+**Repository:** [https://github.com/jymchng/attributedict](https://github.com/jymchng/attributedict)
 
 ---
 
