@@ -216,3 +216,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@v1.14.2
         with:
           packages-dir: dist
+          # Re-runs of the same release tag are idempotent: files already on
+          # PyPI (e.g. the 0.2.1 native wheels/sdist) are skipped while the
+          # pyodide wheel gets uploaded.
+          skip-existing: true
