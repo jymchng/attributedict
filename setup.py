@@ -8,21 +8,32 @@ Two mechanisms work together:
 - ``bdist_wheel py_limited_api="cp39"`` makes the wheel tag ``cp39-abi3``
   (without this, bdist_wheel falls back to the interpreter tag on builds
   where the runtime's EXTENSION_SUFFIXES lack an ``.abi3`` entry).
+
+Pyodide (WebAssembly/emscripten) exception: pyodide wheels are tagged
+``cpXY-emscripten_*_wasm32`` and do NOT use the stable ABI, so abi3 tagging
+is skipped when building under emscripten (``sys.platform == 'emscripten'``).
 """
 
+import sys
+
 from setuptools import Extension, setup
+
+IS_EMSCRIPTEN = sys.platform == "emscripten"
+
+ext_kwargs = {}
+options = {}
+if not IS_EMSCRIPTEN:
+    # abi3 only applies to non-emscripten (native) builds.
+    ext_kwargs["py_limited_api"] = True
+    options["bdist_wheel"] = {"py_limited_api": "cp39"}
 
 setup(
     ext_modules=[
         Extension(
             "attributedict._attributedict",
             sources=["src/attributedict/_attributedict.c"],
-            py_limited_api=True,
+            **ext_kwargs,
         ),
     ],
-    options={
-        "bdist_wheel": {
-            "py_limited_api": "cp39",
-        },
-    },
+    options=options,
 )

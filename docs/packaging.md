@@ -28,6 +28,11 @@ The extension targets the **Limited API / Stable ABI** (`Py_LIMITED_API`
 target 3.9), producing a `cp39-abi3` wheel per platform (D-002, PKG-003).
 One wheel covers CPython 3.9–3.14 on a given platform.
 
+The one exception is the **pyodide wheel**: the emscripten/WebAssembly
+build (`cp313-emscripten_*_wasm32`) does not use the stable ABI, so
+`setup.py` skips `py_limited_api`/abi3 tagging when `sys.platform ==
+'emscripten'`.
+
 ## Wheels
 
 `cibuildwheel` builds abi3 wheels for (PKG-006):
@@ -36,6 +41,11 @@ One wheel covers CPython 3.9–3.14 on a given platform.
   (non-x86_64 via QEMU)
 - macOS arm64 + x86_64
 - Windows AMD64, ARM64, x86
+
+Plus a **pyodide wheel** (`cp313-pyodide_wasm32` → `cp313-emscripten_*_wasm32`)
+built by cibuildwheel's pyodide platform for browser/WebAssembly use
+(`CIBW_PLATFORM=pyodide`); it is published as an asset of the GitHub
+Release and uploaded to PyPI alongside the native wheels.
 
 Source distribution (sdist) builds from source on all supported platforms
 (PKG-007).

@@ -7,7 +7,8 @@ configured in CI, and nothing auto-publishes except when a `v*` tag is
 pushed. The `release.yml` workflow is triggered manually (or by a tag push)
 and:
 
-1. builds the sdist + the full abi3 wheel matrix (cibuildwheel),
+1. builds the sdist + the full abi3 wheel matrix (cibuildwheel) + a
+   **pyodide (WebAssembly/emscripten) wheel** (`cp313-emscripten_*_wasm32`),
 2. verifies artifact integrity (SHA-256) and artifact count,
 3. creates a GitHub Release with the artifacts (draft),
 4. publishes the artifacts to **PyPI via trusted publishing (OIDC)** as
@@ -54,6 +55,8 @@ isn't one; bump by tagging.
    - builds sdist + abi3 wheels for every platform/arch
      (Linux x86_64/aarch64/i686/ppc64le/s390x/armv7l, macOS arm64/x86_64,
      Windows AMD64/ARM64/x86),
+   - builds the **pyodide wheel** (`cp313-pyodide_wasm32` →
+     `cp313-emscripten_*_wasm32`) for browser/WebAssembly use,
    - verifies artifact integrity (SHA-256, SEC-006),
    - creates a GitHub Release (draft) with the artifacts,
    - publishes to PyPI via trusted publishing (OIDC).

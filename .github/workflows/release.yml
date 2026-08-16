@@ -123,9 +123,41 @@ jobs:
           name: wheels-${{ matrix.os }}-${{ matrix.arch }}
           path: dist/*.whl
 
+  build_pyodide_wheel:
+    name: Build pyodide wheel (wasm32)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Build pyodide (emscripten wasm32) wheel
+        env:
+          CIBW_PLATFORM: pyodide
+          CIBW_BUILD: cp313-pyodide_wasm32
+        uses: pypa/cibuildwheel@v4.2.0
+        with:
+          output-dir: dist
+
+      - name: Verify pyodide wheel
+        run: |
+          ls -la dist/
+          test -n "$(ls dist/*emscripten*.whl 2>/dev/null || echo '')" || { echo "no emscripten wheel produced"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-pyodide
+          path: dist/*emscripten*.whl
+
   github_release:
     name: Create GitHub Release
-    needs: [build_sdist, build_wheels]
+    needs: [build_sdist, build_wheels, build_pyodide_wheel]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -151,7 +183,8 @@ jobs:
           print(f"total artifacts: {len(files)}")
           assert any(f.endswith(".tar.gz") for f in files), "missing sdist"
           whls = [f for f in files if f.endswith(".whl")]
-          assert len(whls) >= 8, f"expected many wheels, got {len(whls)}"
+          assert len(whls) >= 9, f"expected many wheels incl pyodide, got {len(whls)}"
+          assert any("emscripten" in f for f in whls), "missing pyodide wheel"
           EOF
 
       - uses: softprops/action-gh-release@v3.0.2
@@ -163,7 +196,7 @@ jobs:
 
   publish:
     # Publish to PyPI ("py-attributedict") via trusted publishing (OIDC).
-    needs: [build_sdist, build_wheels]
+    needs: [build_sdist, build_wheels, build_pyodide_wheel]
     runs-on: ubuntu-latest
     environment:
       name: release
