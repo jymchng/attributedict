@@ -5,6 +5,16 @@ All notable changes to `attributedict` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-08-16
+
+### Changed
+
+- Removed all traceability codes (issue/requirement references) from the
+  documentation and README — the docs now read as plain, self-contained
+  prose with the same technical content.
+- Documented non-string (e.g. class) key behavior: mapping access reads any
+  hashable key, attribute syntax reads string-identifier keys only.
+
 ## [0.2.2] - 2026-08-16
 
 ### Changed
