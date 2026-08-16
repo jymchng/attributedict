@@ -247,18 +247,35 @@ fail:
     }
 
     if (PyTuple_Check(value)) {
-        Py_ssize_t n = PyTuple_GET_SIZE(value);
+        /* Use the libpython FUNCTION forms (PyTuple_Size/PyTuple_GetItem/
+         * PyTuple_SetItem), NOT the PyTuple_GET_SIZE/GET_ITEM/SET_ITEM
+         * macros: on Emscripten/wasm32 (pyodide 314) the inline macros are
+         * compiled against a stale PyTupleObject layout and read/write
+         * ob_item at the wrong offset, corrupting memory and trapping the
+         * runtime ("memory access out of bounds"). The function forms are
+         * implemented in libpython with the runtime's own layout (this is
+         * why e.g. conditional-method._c, which parses with
+         * PyArg_ParseTuple, works on pyodide). */
+        Py_ssize_t n = PyTuple_Size(value);
+        if (n < 0) {
+            return NULL;
+        }
         PyObject *nt = AD_ALLOC(PyTuple_New(n));
         if (nt == NULL) {
             return NULL;
         }
         for (Py_ssize_t i = 0; i < n; i++) {
-            PyObject *cv = AttributeDict_ConvertValue(PyTuple_GET_ITEM(value, i), ctx);
+            PyObject *item = PyTuple_GetItem(value, i);
+            if (item == NULL) {
+                Py_DECREF(nt);
+                return NULL;
+            }
+            PyObject *cv = AttributeDict_ConvertValue(item, ctx);
             if (cv == NULL) {
                 Py_DECREF(nt);
                 return NULL;
             }
-            PyTuple_SET_ITEM(nt, i, cv);  /* steals the reference */
+            PyTuple_SetItem(nt, i, cv);  /* steals the reference */
         }
         return nt;
     }
@@ -305,16 +322,31 @@ AttributeDict_init(AttributeDictObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    /* Seed the context with the source mapping (if construction is from a
-     * single mapping) so a self-referential source resolves to *self*. */
-    if (PyTuple_GET_SIZE(args) > 0) {
-        PyObject *src = PyTuple_GET_ITEM(args, 0);
+    /* Seed the conversion context: if we were constructed from a single
+     * mapping, map that source mapping to *self* so a self-referential
+     * source resolves to *self* (FR-007, cycle-safe).
+     *
+     * Parse the source via PyArg_ParseTuple (a libpython function) rather
+     * than the PyTuple_GET_SIZE/PyTuple_GET_ITEM macros: on
+     * Emscripten/wasm32 (pyodide 314) the inline macros are compiled
+     * against a stale PyTupleObject layout and read args[0] from the wrong
+     * offset, dereferencing garbage and trapping the runtime ("memory
+     * access out of bounds" at AttributeDict_init). PyArg_ParseTuple reads
+     * the tuple with the runtime's own layout. */
+    PyObject *src = NULL;
+    if (PyArg_ParseTuple(args, "O", &src)) {
         if (PyDict_Check(src) && src != (PyObject *)self) {
             if (AttributeDict_ctx_put(ctx, src, (PyObject *)self) < 0) {
                 Py_DECREF(ctx);
                 return -1;
             }
         }
+    }
+    else {
+        /* args was empty (no positional argument): nothing to seed. The
+         * only failure mode of the "O" format on a tp_init args tuple is
+         * "not enough arguments", so clearing the error is safe. */
+        PyErr_Clear();
     }
 
     /* Convert each value in place. Iterate key/value pairs directly: only

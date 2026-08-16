@@ -5,6 +5,26 @@ All notable changes to `attributedict` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-08-17
+
+### Fixed
+
+- **Crash on Pyodide (WebAssembly): any positional-argument construction
+  (`AttributeDict({...})`, `AttributeDict(())`, `AttributeDict([...])`) and
+  nested-tuple values fatally crashed pyodide 314.0.3 with
+  `RuntimeError: memory access out of bounds`.** Root cause: the extension's
+  inline `PyTuple_GET_SIZE`/`PyTuple_GET_ITEM`/`PyTuple_SET_ITEM` macros are
+  compiled against a `PyTupleObject` layout that no longer matches CPython
+  3.14 (the pyodide 314.0.3 runtime) on Emscripten/wasm32, so they read/write
+  `ob_item` at a stale offset, producing garbage pointers that trap the wasm
+  runtime. The fix replaces those macros with the libpython **function** forms
+  (`PyTuple_Size`/`PyTuple_GetItem`/`PyTuple_SetItem`) and parses the `tp_init`
+  source mapping with `PyArg_ParseTuple` — functions implemented in libpython
+  with the runtime's own layout (the same reason `conditional-method._c`
+  works on pyodide). Verified on pyodide 314.0.3: positional map/list/tuple
+  construction, nested tuples, kwargs, and the self-referential cycle case
+  (`d.self.back is d`) all work.
+
 ## [0.2.5] - 2026-08-16
 
 ### Fixed
