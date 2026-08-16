@@ -5,6 +5,17 @@ All notable changes to `attributedict` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-08-16
+
+### Changed
+
+- **Pyodide wheel now targets Emscripten 5.0.3** (pyodide 314.0.3): the
+  release workflow pins `pyodide-version: 314.0.3`, so the `*.whl` built
+  for the browser runs on the AsyncMove playground's Pyodide runtime.
+  Previously the wheel was tagged `pyemscripten_2025_0_wasm32` and micropip
+  rejected it with `ValueError: Wheel was built with Emscripten
+  vpyemscripten.2025.0 but Pyodide was built with Emscripten v5.0.3`.
+
 ## [0.2.3] - 2026-08-16
 
 ### Changed
