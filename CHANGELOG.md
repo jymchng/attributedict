@@ -5,6 +5,17 @@ All notable changes to `attributedict` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-08-15
+
+### Fixed
+
+- README logo now uses an absolute `raw.githubusercontent.com` URL so the
+  image renders on the PyPI project page (Warehouse does not resolve
+  relative README image paths).
+- README now prominently links the documentation site
+  (`https://jymchng.github.io/attributedict/`) and the repository
+  (`https://github.com/jymchng/attributedict`) near the top.
+
 ## [0.2.0] - 2026-08-15
 
 ### Added
