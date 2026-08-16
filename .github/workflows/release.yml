@@ -241,7 +241,9 @@ jobs:
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           files: dist/*
-          draft: true
+          # Published immediately (not a draft) so assets are downloadable
+          # right away; re-runs on the same tag update the existing release.
+          draft: false
           generate_release_notes: true
 
   publish:
