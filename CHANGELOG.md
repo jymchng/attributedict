@@ -5,6 +5,20 @@ All notable changes to `attributedict` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2026-08-16
+
+### Fixed
+
+- **Pyodide wheel is now actually installable in Pyodide 314.0.3** (the
+  AsyncMove playground). The release pipeline re-tags the wheel from
+  `pyemscripten_2025_0_wasm32` to `emscripten_5_0_3_wasm32` (filename,
+  `WHEEL` metadata, and recomputed `RECORD` hashes — the binary is
+  unchanged) before uploading, because micropip 0.11.1's
+  `platform_to_version()` only strips the `emscripten_` prefix and rejected
+  the `pyemscripten_*` tag with `ValueError: Wheel was built with Emscripten
+  vpyemscripten.2025.0 but Pyodide was built with Emscripten v5.0.3`.
+  Resolves the caveat noted in 0.2.4.
+
 ## [0.2.4] - 2026-08-16
 
 ### Changed
