@@ -5,6 +5,21 @@ All notable changes to `attributedict` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-08-16
+
+### Changed
+
+- User-facing documentation rewritten in a friendly, conversational tone
+  (README + installation/quickstart/api/attribute-semantics/mapping-semantics/
+  nested/serialization/faq/troubleshooting/index) — same technical content,
+  structure, and code examples, just more approachable prose.
+
+### Fixed
+
+- `docs/quickstart.md` had a stale "keys win" example; corrected to the
+  I-024 behavior (`d.items` returns the real `dict` method, `d["items"]`
+  keeps the key's value).
+
 ## [0.2.1] - 2026-08-15
 
 ### Fixed
