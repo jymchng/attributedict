@@ -1,6 +1,6 @@
 # Errors
 
-## Exception contract (FR-015)
+## Exception contract 
 
 | Operation | Exception |
 |---|---|
@@ -14,22 +14,22 @@
 ### Example messages
 
 ```python
-AttributeDict()["missing"]
+AttributeDict["missing"]
 # KeyError: 'missing'
 
-AttributeDict().missing
+AttributeDict.missing
 # AttributeError: 'attributedict._attributedict.AttributeDict' object has no attribute 'missing'
 ```
 
 The C implementation never leaves a stale exception after a successful
-operation (MEM-004); `PyErr_Clear()` is used only where an exception is
+operation; `PyErr_Clear` is used only where an exception is
 intentionally swallowed and re-raised with a different type (e.g. the
 `del d.missing` → `AttributeError` deviation).
 
 ## Unhashable
 
-`AttributeDict` is unhashable, like `dict` (FR-012):
+`AttributeDict` is unhashable, like `dict` :
 
 ```python
-hash(AttributeDict())  # TypeError: unhashable type: '...AttributeDict'
+hash(AttributeDict) # TypeError: unhashable type: '...AttributeDict'
 ```

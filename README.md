@@ -1,24 +1,24 @@
 <p align="center">
-  <a href="https://github.com/jymchng/attributedict">
-    <img src="https://raw.githubusercontent.com/jymchng/attributedict/main/docs/assets/logo.png" alt="attributedict" width="120">
-  </a>
+ <a href="https://github.com/jymchng/attributedict">
+ <img src="https://raw.githubusercontent.com/jymchng/attributedict/main/docs/assets/logo.png" alt="attributedict" width="120">
+ </a>
 </p>
 
 <h1 align="center">attributedict</h1>
 
 <p align="center">
-  <b>dict semantics with attribute access.</b><br>
-  A production-quality <b>CPython C extension</b> implementing an <code>AttributeDict</code> —<br>
-  a real <code>dict</code> whose keys you can also reach with dot notation.
+ <b>dict semantics with attribute access.</b><br>
+ A production-quality <b>CPython C extension</b> implementing an <code>AttributeDict</code> —<br>
+ a real <code>dict</code> whose keys you can also reach with dot notation.
 </p>
 
 <p align="center">
-  <a href="https://github.com/jymchng/attributedict/actions/workflows/tests.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/tests.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/jymchng/attributedict/actions/workflows/lint.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/lint.yml/badge.svg" alt="Lint"></a>
-  <a href="https://github.com/jymchng/attributedict/actions/workflows/wheels.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/wheels.yml/badge.svg" alt="Wheels"></a>
-  <a href="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue"><img src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg" alt="Python 3.9–3.14"></a>
-  <a href="https://img.shields.io/badge/coverage-92%25-brightgreen"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen.svg" alt="Coverage 92%"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
+ <a href="https://github.com/jymchng/attributedict/actions/workflows/tests.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/tests.yml/badge.svg" alt="CI"></a>
+ <a href="https://github.com/jymchng/attributedict/actions/workflows/lint.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/lint.yml/badge.svg" alt="Lint"></a>
+ <a href="https://github.com/jymchng/attributedict/actions/workflows/wheels.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/wheels.yml/badge.svg" alt="Wheels"></a>
+ <a href="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue"><img src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg" alt="Python 3.9–3.14"></a>
+ <a href="https://img.shields.io/badge/coverage-92%25-brightgreen"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen.svg" alt="Coverage 92%"></a>
+ <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
 </p>
 
 ---
@@ -37,37 +37,37 @@ from attributedict import AttributeDict
 
 config = AttributeDict(host="localhost", port=8080)
 
-config["host"]       # "localhost"
-config.host          # "localhost" — attribute access, same data
+config["host"] # "localhost"
+config.host # "localhost" — attribute access, same data
 
-config.debug = True  # stores config["debug"] = True
-config["debug"]      # True
+config.debug = True # stores config["debug"] = True
+config["debug"] # True
 ```
 
 Nested mappings become `AttributeDict` automatically:
 
 ```python
 settings = AttributeDict({
-    "database": {"host": "localhost", "ports": [5432, {"tls": True}]},
+ "database": {"host": "localhost", "ports": [5432, {"tls": True}]},
 })
 
-settings.database.host          # "localhost"
-settings.database.ports[1].tls  # True
+settings.database.host # "localhost"
+settings.database.ports[1].tls # True
 ```
 
 ## Features
 
 - ✅ **Genuine C extension** — a C subclass of `dict` with custom
-  `tp_getattro`/`tp_setattro`; `isinstance(d, dict)` is `True`.
+ `tp_getattro`/`tp_setattro`; `isinstance(d, dict)` is `True`.
 - ✅ **Type attributes win on the attribute path** — `d.items` reads the real
-  `dict` method even when a key `"items"` exists; `d["items"]` keeps the
-  key's value (I-024).
+ `dict` method even when a key `"items"` exists; `d["items"]` keeps the
+ key's value.
 - ✅ **Recursive nested conversion** — cycle-safe at construction; dicts inside
-  lists/tuples become `AttributeDict`.
+ lists/tuples become `AttributeDict`.
 - ✅ **Full dict compatibility** — mapping protocol, dict methods, views,
-  `MutableMapping`; `copy()`/`fromkeys` return `AttributeDict`.
+ `MutableMapping`; `copy`/`fromkeys` return `AttributeDict`.
 - ✅ **Copy & pickle** — `copy.copy`, `copy.deepcopy`, and `pickle` across all
-  protocols (0–5), cycles preserved.
+ protocols (0–5), cycles preserved.
 - ✅ **Stable ABI** — `cp39-abi3` wheels cover CPython **3.9–3.14**.
 - ✅ **Zero runtime dependencies.**
 
@@ -90,13 +90,13 @@ already taken on PyPI by unrelated projects.
 ## Key highlights
 
 - **It's a real dict.** `isinstance(config, dict)`, `dict(config)`, views,
-  and all `dict` methods just work.
+ and all `dict` methods just work.
 - **Attribute access mirrors mapping access.** `config.host` and
-  `config["host"]` read the same value; assignment and deletion work too.
+ `config["host"]` read the same value; assignment and deletion work too.
 - **Nested data, attribute style.** `settings.database.host` instead of
-  `settings["database"]["host"]`.
+ `settings["database"]["host"]`.
 - **Predictable collisions.** Keys never shadow methods on the attribute
-  path: `d.items` is the method, `d["items"]` is the key's value.
+ path: `d.items` is the method, `d["items"]` is the key's value.
 
 ## Documentation
 
@@ -121,11 +121,11 @@ Full documentation is published at
 ## Development
 
 ```bash
-nox -s tests       # pytest
-nox -s lint        # ruff
-nox -s typecheck   # mypy (strict)
-nox -s coverage    # coverage (>= 80%)
-nox -s build       # sdist + abi3 wheel
+nox -s tests # pytest
+nox -s lint # ruff
+nox -s typecheck # mypy (strict)
+nox -s coverage # coverage (>= 80%)
+nox -s build # sdist + abi3 wheel
 ```
 
 Want to contribute? See [CONTRIBUTING.md](CONTRIBUTING.md) and

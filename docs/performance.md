@@ -33,38 +33,38 @@ Three implementations are compared:
 **Where the C extension improves things (vs the pure-Python reference):**
 
 - Attribute get/set: ~3–5× faster (C avoids the Python `__getattribute__`
-  dispatch and `str.isidentifier()` call per lookup).
+ dispatch and `str.isidentifier` call per lookup).
 - Construction: ~10× faster (recursive conversion is done in C, not Python).
-- `copy()`: ~17× faster.
+- `copy`: ~17× faster.
 - `dict.items(d)` / mapping views unaffected.
 
 **Where it is on par with plain `dict`:**
 
 - `d[key]`, `d[key] = v`, `del d[key]`, iteration: essentially identical to
-  plain `dict` (the operations inherit directly from the dict base).
+ plain `dict` (the operations inherit directly from the dict base).
 - Construction from an existing mapping is slightly slower than plain `dict`
-  (3.1 µs vs 0.5 µs) because the C code performs the recursive conversion
-  pass at construction (O(n), R-005). This is the documented cost of the
-  FR-007 conversion feature.
+ (3.1 µs vs 0.5 µs) because the C code performs the recursive conversion
+ pass at construction (O(n)). This is the documented cost of the
+ conversion feature.
 
 **Where it does NOT help:**
 
 - Iteration and mapping views: same as dict (inherited).
 - No claim of "2× faster than dict" is made: for inherited operations the C
-  type is at parity with dict, and the speedups are against the
-  pure-Python baseline, which is the honest comparison.
+ type is at parity with dict, and the speedups are against the
+ pure-Python baseline, which is the honest comparison.
 
 ## Construction cost
 
 Construction is O(n) in the number of contained items due to recursive
-conversion (FR-007); nested/cyclic structures are handled cycle-safe. This
+conversion; nested/cyclic structures are handled cycle-safe. This
 is documented in [nested.md](nested.md) and confirmed by the construction
 benchmarks above.
 
 ## Reproducing
 
 ```bash
-python benchmarks/bench.py                 # table
+python benchmarks/bench.py # table
 python benchmarks/bench.py --json out.json # JSON data
 ```
 

@@ -3,7 +3,7 @@
 ## Requirements
 
 - Python **3.9–3.14** (CPython only; see [compatibility](#compatibility)).
-- No third-party runtime dependencies (C-004).
+- No third-party runtime dependencies.
 
 ## From PyPI (when published)
 
@@ -22,13 +22,13 @@ projects, so this distribution uses `py-attributedict` instead.
 ```bash
 git clone https://github.com/jymchng/attributedict.git
 cd attributedict
-pip install .
+pip install.
 ```
 
 Or, if you're planning to hack on the code, install in editable mode:
 
 ```bash
-pip install -e .
+pip install -e.
 ```
 
 ## Build requirements

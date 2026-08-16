@@ -4,23 +4,23 @@
 
 ```
 Python public API: attributedict.AttributeDict (thin wrapper)
-        ↓
+ ↓
 C extension: attributedict._attributedict (module init)
-        ↓
+ ↓
 C type: AttributeDict_Type (PyTypeObject)
-   - inherits from dict (PyDict_Type)            -> isinstance(d, dict) is True (C-002)
-   - custom tp_getattro / tp_setattro            -> keys-win attribute access (FR-006)
-   - custom tp_new / tp_init                     -> recursive nested conversion (FR-007)
-   - GC slots (tp_traverse / tp_clear)           -> cycle safety (MEM-003)
+ - inherits from dict (PyDict_Type) -> isinstance(d, dict) is True 
+ - custom tp_getattro / tp_setattro -> keys-win attribute access 
+ - custom tp_new / tp_init -> recursive nested conversion 
+ - GC slots (tp_traverse / tp_clear) -> cycle safety 
 ```
 
-## C API strategy (I-003)
+## C API strategy 
 
 **Decision: Limited API / Stable ABI (abi3), `Py_LIMITED_API` target 3.9,
-wheel tag `cp39-abi3`** (D-002). This yields one wheel per platform across
-CPython 3.9–3.14 (D-009, D-010).
+wheel tag `cp39-abi3`**. This yields one wheel per platform across
+CPython 3.9–3.14.
 
-**Decision: C subclass of `dict`** (D-001) rather than composition or a
+**Decision: C subclass of `dict`** rather than composition or a
 reimplementation. The dict base provides the mapping protocol, views,
 iteration, equality, pickling, and copy behavior for free; the type only
 overrides attribute access and construction.
@@ -30,26 +30,25 @@ overrides attribute access and construction.
 Because `AttributeDict_Type` subclasses `PyDict_Type`:
 
 - `mp_length`, `mp_subscript`, `mp_ass_subscript`, `sq_contains` are
-  **inherited** from dict — no overrides needed (FR-008).
-- `tp_richcompare` is **inherited** from dict — equality is dict semantics
-  (FR-011).
-- `tp_hash` is inherited from dict — **unhashable** (FR-012, D-007).
+ **inherited** from dict — no overrides needed.
+- `tp_richcompare` is **inherited** from dict — equality is dict semantics.
+- `tp_hash` is inherited from dict — **unhashable**.
 - dict methods (`get`, `setdefault`, `update`, `pop`, `popitem`, `clear`,
-  `copy`, `keys`, `items`, `values`, `fromkeys`) are inherited.
-  `copy()` and `fromkeys()` are overridden to return `AttributeDict`
-  (FR-009). `copy` returns `AttributeDict` via `tp_copy`-equivalent
-  (dict's `copy` returns the same type for subclasses via `PyDict_Copy` —
-  verified at implementation time in I-007).
+ `copy`, `keys`, `items`, `values`, `fromkeys`) are inherited.
+ `copy` and `fromkeys` are overridden to return `AttributeDict`
+. `copy` returns `AttributeDict` via `tp_copy`-equivalent
+ (dict's `copy` returns the same type for subclasses via `PyDict_Copy` —
+ verified at implementation time in ).
 
 ### Overridden slots
 
 | Slot | Purpose | Notes |
 |---|---|---|
-| `tp_getattro` | keys-win attribute read (FR-003/006) | see resolution order below |
-| `tp_setattro` | attribute write/delete → mapping ops (FR-004/005) | |
-| `tp_new` / `tp_init` | construction forms + recursive conversion (FR-002/007) | cycle-safe |
-| `tp_repr` | `AttributeDict({...})` (FR-010) | |
-| `tp_traverse` / `tp_clear` | GC participation (MEM-003) | portable pattern below |
+| `tp_getattro` | keys-win attribute read | see resolution order below |
+| `tp_setattro` | attribute write/delete → mapping ops | |
+| `tp_new` / `tp_init` | construction forms + recursive conversion | cycle-safe |
+| `tp_repr` | `AttributeDict({...})` | |
+| `tp_traverse` / `tp_clear` | GC participation | portable pattern below |
 | `tp_dealloc` | delegate to dict base | no double-free |
 
 ### GC strategy for a dict subclass under the Limited API
@@ -62,39 +61,39 @@ subclasses dict and holds references in the dict:
 static int
 AttributeDict_traverse(AttributeDict *self, visitproc visit, void *arg)
 {
-    PyObject *items = PyDict_Items((PyObject *)self);
-    if (items == NULL) { return -1; }
-    for (Py_ssize_t i = 0; i < PyList_GET_SIZE(items); i++) {
-        Py_VISIT(PyList_GET_ITEM(items, i));  /* visits key and value tuples */
-    }
-    Py_DECREF(items);
-    return 0;
+ PyObject *items = PyDict_Items((PyObject *)self);
+ if (items == NULL) { return -1; }
+ for (Py_ssize_t i = 0; i < PyList_GET_SIZE(items); i++) {
+ Py_VISIT(PyList_GET_ITEM(items, i)); /* visits key and value tuples */
+ }
+ Py_DECREF(items);
+ return 0;
 }
 ```
 
 `tp_clear` clears the dict contents with `PyDict_Clear` (leaving an empty
 AttributeDict). This is safe for cycles and correct across 3.9–3.14.
-(At implementation time in I-004/I-005, verify whether the items-tuple
+(At implementation time, verify whether the items-tuple
 traversal fully covers key+value references; if not, iterate pairs directly.)
 
 ### Attribute resolution order (`tp_getattro`) — keys win
 
 1. If the attribute name is a `str` that is a valid identifier
-   (`PyUnicode_IsIdentifier`, available 3.9+) **and** a key exists
-   (`PyDict_GetItemWithError`, available 3.9+): return the key's value.
+ (`PyUnicode_IsIdentifier`, available 3.9+) **and** a key exists
+ (`PyDict_GetItemWithError`, available 3.9+): return the key's value.
 2. Otherwise fall back to `PyObject_GenericGetAttr`.
 3. If that raises `AttributeError`, propagate it.
 
-This implements FR-006 (keys win) and FR-014 (non-identifier keys are not
-reachable via attribute syntax).
+This implements the resolution order: real type attributes win on the
+attribute path, and non-identifier keys are not reachable via attribute syntax.
 
 ### Attribute set/delete (`tp_setattro`)
 
-- `d.name = v` → `PyDict_SetItem(self, name, v)` (FR-004).
+- `d.name = v` → `PyDict_SetItem(self, name, v)`.
 - `del d.name` → `PyDict_DelItem(self, name)`; on `KeyError` re-raise as
-  `AttributeError` (FR-005, deviation documented in spec 08).
+ `AttributeError` (deviation documented in spec 08).
 - Names that are not identifiers: `PyDict_SetItem` still works for mapping
-  syntax; attribute syntax simply never resolves them.
+ syntax; attribute syntax simply never resolves them.
 
 ## Verified Limited-API availability (CPython 3.13 headers, 3.9+ target)
 
@@ -119,16 +118,16 @@ the portable `Py_VISIT`/`Py_CLEAR` pattern instead.
 
 ```
 src/attributedict/
-├── __init__.py        # public re-export
+├── __init__.py # public re-export
 ├── py.typed
-└── _attributedict.c   # module init + type definition
+└── _attributedict.c # module init + type definition
 ```
 
 If complexity grows, split into `module.c`, `attributedict.c/.h`,
 `conversion.c/.h`, `attributes.c/.h` — only if each file has a coherent
-responsibility (D-002 maintainability).
+responsibility ( maintainability).
 
 ## References
 
 - spec 05 (system architecture), spec 09 (packaging), spec 07 (memory),
-  decisions D-001/D-002/D-009/D-010/D-012.
+ decisions ////.

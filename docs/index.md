@@ -23,9 +23,9 @@ assert config["debug"] is True
 ## Highlights
 
 - **Genuine C extension** — a C subclass of `dict`; `isinstance(d, dict)` is
-  `True`; full mapping protocol and dict methods.
+ `True`; full mapping protocol and dict methods.
 - **Type attributes win on the attribute path** — `d.items` reads the real
-  `dict` method; `d["items"]` keeps the key's value (I-024).
+ `dict` method; `d["items"]` keeps the key's value.
 - **Recursive, cycle-safe nested conversion** at construction.
 - **Copy / pickle** across all protocols (0–5), cycles preserved.
 - **Stable ABI** — `cp39-abi3` wheels cover CPython 3.9–3.14.

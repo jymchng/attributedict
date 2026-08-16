@@ -14,19 +14,19 @@ the public API.
 > implementation of the same contract. The test suite and benchmarks use it
 > as the cross-check baseline; it is **not** the public import path.
 
-## Construction (FR-002)
+## Construction 
 
 ```python
-AttributeDict()                 # empty
-AttributeDict(mapping)          # from a mapping
+AttributeDict # empty
+AttributeDict(mapping) # from a mapping
 AttributeDict(iterable_of_pairs)
 AttributeDict(**kwargs)
 AttributeDict(mapping, **kwargs)
 ```
 
-All forms match `dict`. Nested mappings are recursively converted (FR-007).
+All forms match `dict`. Nested mappings are recursively converted.
 
-## Attribute / Mapping semantics (FR-003..006)
+## Attribute / Mapping semantics 
 
 | Operation | Behavior |
 |---|---|
@@ -36,34 +36,34 @@ All forms match `dict`. Nested mappings are recursively converted (FR-007).
 | `d.name` | real type attribute first; else `d["name"]` if key; else AttributeError |
 | `d.name = v` | `d["name"] = v` |
 | `del d.name` | delete key `"name"`; `AttributeError` if absent |
-| `d.items` (key `"items"` exists) | the **dict method** (type attribute wins, I-024) |
+| `d.items` (key `"items"` exists) | the **dict method** (type attribute wins) |
 | `dict.items(d)` | the mapping view |
 
-## repr / str (FR-010)
+## repr / str 
 
 ```python
-repr(AttributeDict({'a': 1}))   # "AttributeDict({'a': 1})"
+repr(AttributeDict({'a': 1})) # "AttributeDict({'a': 1})"
 ```
 
 Nested values use their own repr; recursive structures render with `...`.
 
-## Equality / hash (FR-011/012)
+## Equality / hash 
 
 `==`/`!=` follow dict semantics. `AttributeDict` is **unhashable** like dict.
 
-## Copy / pickle (FR-013)
+## Copy / pickle 
 
 `copy.copy`, `copy.deepcopy`, `pickle.dumps/loads` are supported. Nested
 `AttributeDict` instances stay `AttributeDict`; self-references and cycles
 work.
 
-## Errors (FR-015)
+## Errors 
 
 - Missing key → `KeyError`
 - Missing attribute → `AttributeError`
 - Unhashable key → `TypeError`
 - `del d.missing` → `AttributeError` (documented deviation from
-  `del d["missing"]` → `KeyError`)
+ `del d["missing"]` → `KeyError`)
 
 ## Typing
 
