@@ -147,12 +147,10 @@ jobs:
         uses: pypa/cibuildwheel@v4.2.0
         with:
           output-dir: dist
-          # Pin pyodide 314.0.3 (Emscripten 5.0.3) — the version the AsyncMove
-          # playground loads (jsdelivr "latest"). Without this, the wheel is
-          # tagged pyemscripten_2025_0_wasm32 and micropip rejects it against
-          # a 5.0.3 runtime: "Wheel was built with Emscripten vpyemscripten.2025.0
-          # but Pyodide was built with Emscripten v5.0.3".
-          pyodide-version: 314.0.3
+          # pyodide-version is set via [tool.cibuildwheel] pyodide-version in
+          # pyproject.toml (= 314.0.3 -> ABI 2026_0 / Emscripten 5.0.3, the
+          # AsyncMove playground runtime). It is NOT a workflow input for
+          # cibuildwheel v4.
 
       - name: Produce GitHub-only emscripten variant of the pyodide wheel
         env:
