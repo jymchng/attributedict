@@ -287,6 +287,16 @@ jobs:
           merge-multiple: true
           path: dist
 
+      - name: Exclude emscripten variant from PyPI (keep pyemscripten_2026_0_wasm32)
+        run: |
+          # PyPI accepts pyemscripten_2026_0_wasm32 but rejects the
+          # emscripten_5_0_3_wasm32 variant (400 unsupported platform tag).
+          # The emscripten variant ships as a GitHub Release asset only.
+          # NOTE: match *-emscripten_* (the non-py variant) so we keep the
+          # pyemscripten_2026_0_wasm32 wheel.
+          rm -f dist/*-emscripten_*.whl
+          ls -1 dist/
+
       - name: Publish to PyPI (trusted publishing)
         uses: pypa/gh-action-pypi-publish@v1.14.2
         with:
