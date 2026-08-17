@@ -55,4 +55,4 @@ assert config["debug"] is True
 
 ## License
 
-[MIT](https://github.com/OWNER/attributedict/blob/main/LICENSE)
+[MIT](https://github.com/jymchng/attributedict/blob/main/LICENSE)

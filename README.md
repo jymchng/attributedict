@@ -1,6 +1,6 @@
 <p align="center">
- <a href="https://github.com/OWNER/attributedict">
- <img src="https://raw.githubusercontent.com/OWNER/attributedict/main/docs/assets/logo.png" alt="attributedict" width="120">
+ <a href="https://github.com/jymchng/attributedict">
+ <img src="https://raw.githubusercontent.com/jymchng/attributedict/main/docs/assets/logo.png" alt="attributedict" width="120">
  </a>
 </p>
 
@@ -13,9 +13,9 @@
 </p>
 
 <p align="center">
- <a href="https://github.com/OWNER/attributedict/actions/workflows/tests.yml"><img src="https://github.com/OWNER/attributedict/actions/workflows/tests.yml/badge.svg" alt="CI"></a>
- <a href="https://github.com/OWNER/attributedict/actions/workflows/lint.yml"><img src="https://github.com/OWNER/attributedict/actions/workflows/lint.yml/badge.svg" alt="Lint"></a>
- <a href="https://github.com/OWNER/attributedict/actions/workflows/wheels.yml"><img src="https://github.com/OWNER/attributedict/actions/workflows/wheels.yml/badge.svg" alt="Wheels"></a>
+ <a href="https://github.com/jymchng/attributedict/actions/workflows/tests.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/tests.yml/badge.svg" alt="CI"></a>
+ <a href="https://github.com/jymchng/attributedict/actions/workflows/lint.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/lint.yml/badge.svg" alt="Lint"></a>
+ <a href="https://github.com/jymchng/attributedict/actions/workflows/wheels.yml"><img src="https://github.com/jymchng/attributedict/actions/workflows/wheels.yml/badge.svg" alt="Wheels"></a>
  <a href="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue"><img src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue.svg" alt="Python 3.9–3.14"></a>
  <a href="https://img.shields.io/badge/coverage-92%25-brightgreen"><img src="https://img.shields.io/badge/coverage-92%25-brightgreen.svg" alt="Coverage 92%"></a>
  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
@@ -23,8 +23,8 @@
 
 ---
 
-**Documentation:** [https://OWNER.github.io/attributedict/](https://OWNER.github.io/attributedict/) ·
-**Repository:** [https://github.com/OWNER/attributedict](https://github.com/OWNER/attributedict)
+**Documentation:** [https://jymchng.github.io/attributedict/](https://jymchng.github.io/attributedict/) ·
+**Repository:** [https://github.com/jymchng/attributedict](https://github.com/jymchng/attributedict)
 
 ---
 
@@ -101,7 +101,7 @@ already taken on PyPI by unrelated projects.
 ## Documentation
 
 Full documentation is published at
-**[https://OWNER.github.io/attributedict/](https://OWNER.github.io/attributedict/)**
+**[https://jymchng.github.io/attributedict/](https://jymchng.github.io/attributedict/)**
 (MkDocs + Material).
 
 | Topic | Doc |
