@@ -147,44 +147,60 @@ jobs:
         uses: pypa/cibuildwheel@v4.2.0
         with:
           output-dir: dist
-          # pyodide-version is set via [tool.cibuildwheel] pyodide-version in
-          # pyproject.toml (= 314.0.3 -> ABI 2026_0 / Emscripten 5.0.3, the
-          # AsyncMove playground runtime). It is NOT a workflow input for
-          # cibuildwheel v4.
 
-      - name: Produce GitHub-only emscripten variant of the pyodide wheel
+      - name: Re-tag pyodide wheel to pyemscripten_2026_0_wasm32 (PyPI) + emscripten_5_0_3 (GitHub)
         env:
-          # Real Emscripten version of the pinned pyodide xbuildenv. Used as a
-          # fallback if the cache lookup below finds nothing; keep in sync with
-          # pyodide-version above.
           PYODIDE_EMSCRIPTEN_VERSION: "5.0.3"
         run: |
           set -euo pipefail
-          # The native pyodide-build wheel is tagged pyemscripten_2026_0_wasm32
-          # (PEP 783; pyodide 314.0.3 = ABI 2026_0 / Emscripten 5.0.3). That is
-          # the tag PyPI accepts AND micropip 0.11.1's sys_tags() generates, so
-          # it is uploaded to PyPI for Packages-tab (install-by-name) installs.
-          # For direct-URL users we ALSO ship an emscripten_5_0_3_wasm32 variant
-          # as a GitHub Release asset only (PyPI rejects that tag).
           ls -1 dist/
-          # Derive the Emscripten version from the xbuildenv that cibuildwheel
-          # just installed (authoritative: it is the exact toolchain the wheel
-          # was compiled with). Fall back to the env var above.
-          # NOTE: keep '*314.0.3*' in sync with pyodide-version above.
-          MKFILE=$(find "$HOME/.cache/cibuildwheel" -type f -name Makefile.envs \
-            -path '*pyodide-build-*' -path '*314.0.3*' \
-            -path '*/xbuildenv/pyodide-root/Makefile.envs' 2>/dev/null | head -n1 || true)
-          if [ -n "$MKFILE" ]; then
-            # Makefile.envs uses 'export PYODIDE_EMSCRIPTEN_VERSION ?= 5.0.3'
-            # (?= means "set if not already defined"); also tolerate '='.
-            PYODIDE_EMSCRIPTEN_VERSION=$(sed -n 's/^export *PYODIDE_EMSCRIPTEN_VERSION[^=]*= *//p' "$MKFILE" \
-              | tr -d "\"'" | tail -n1)
-          fi
-          echo "Emscripten version: ${PYODIDE_EMSCRIPTEN_VERSION:-<unset>}"
-          python scripts/retag_pyodide_wheel.py \
-            --emscripten-version "$PYODIDE_EMSCRIPTEN_VERSION" dist/*.whl
-          # Keep BOTH wheels: the pyemscripten_2026_0_wasm32 one (PyPI) and the
-          # emscripten_<ver>_wasm32 one (GitHub release asset).
+          # cibuildwheel 4.2.0's pyodide build tags the wheel
+          # pyemscripten_2025_0_wasm32 (its default xbuildenv), but the
+          # AsyncMove playground runtime (pyodide 314.0.3) reports ABI 2026_0,
+          # so micropip 0.11.1 rejects 2025_0. The binary is already compiled
+          # with Emscripten 5.0.3 (ABI-compatible), so we only re-tag:
+          #   - the PyPI wheel  -> pyemscripten_2026_0_wasm32 (accepted by both
+          #     PyPI and micropip 0.11.1 sys_tags; enables Packages-tab installs)
+          #   - a GitHub asset  -> emscripten_5_0_3_wasm32 (direct-URL installs)
+          python - <<'EOF'
+          import zipfile, base64, hashlib, glob
+
+          def retag(src, dst, old, new):
+              with zipfile.ZipFile(src) as z:
+                  entries = {n: z.read(n) for n in z.namelist()}
+              wm = [n for n in entries if n.endswith("WHEEL")][0]
+              rm = [n for n in entries if n.endswith("RECORD")][0]
+              nw = entries[wm].decode().replace(old, new)
+              with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as z:
+                  for n, data in entries.items():
+                      if n == wm:
+                          data = nw.encode()
+                      if n == rm:
+                          continue
+                      z.writestr(n, data)
+                  rec = []
+                  for n, data in [(k, v) for k, v in entries.items() if k != rm]:
+                      if n == wm:
+                          data = nw.encode()
+                      d = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b"=").decode()
+                      rec.append(f"{n},sha256={d},{len(data)}")
+                  z.writestr(rm, ("\n".join(rec) + "\n" + f"{rm},,\n").encode())
+
+          whls = glob.glob("dist/*.whl")
+          assert len(whls) == 1, whls
+          src = whls[0]
+          # PyPI wheel: pyemscripten_2026_0_wasm32
+          pypi = src.replace("pyemscripten_2025_0_wasm32", "pyemscripten_2026_0_wasm32")
+          retag(src, pypi, "pyemscripten_2025_0_wasm32", "pyemscripten_2026_0_wasm32")
+          # GitHub asset: emscripten_5_0_3_wasm32
+          gh = src.replace("pyemscripten_2025_0_wasm32", "emscripten_5_0_3_wasm32")
+          retag(src, gh, "pyemscripten_2025_0_wasm32", "emscripten_5_0_3_wasm32")
+          # keep both; drop the untagged original
+          import os
+          os.remove(src)
+          print("wrote:", pypi)
+          print("wrote:", gh)
+          EOF
 
       - name: Verify pyodide wheel tags (pyemscripten_2026_0_wasm32 + emscripten variant)
         run: |
