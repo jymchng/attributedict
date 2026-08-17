@@ -9,7 +9,7 @@ description = "AttributeDict: a CPython C extension dict subclass with attribute
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "Jim Chng", email = "jimchng@hotmail.com" }]
+authors = [{ name = "Jim Chng", email = "jimchng@outlook.com" }]
 keywords = ["attributedict", "attrdict", "dict", "attribute", "mapping", "c-extension"]
 classifiers = [
     "Development Status :: 3 - Alpha",

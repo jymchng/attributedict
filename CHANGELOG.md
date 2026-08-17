@@ -5,6 +5,18 @@ All notable changes to `attributedict` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2026-08-17
+
+### Changed
+
+- **Maintainer contact email corrected**: `pyproject.toml` author email is now
+  `jimchng@outlook.com` (the previous `jimchng@hotmail.com` was stale). The
+  PyPI package metadata now carries the correct address.
+- Docs/README scrubbed of personal identifiers (GitHub username `jymchng`
+  replaced with `OWNER` in docs and workflow comments; the personal email was
+  removed from `SECURITY.md`), so the PyPI description and docs no longer
+  expose them.
+
 ## [0.2.6] - 2026-08-17
 
 ### Fixed
