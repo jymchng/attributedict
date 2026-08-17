@@ -5,6 +5,18 @@ All notable changes to `attributedict` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] - 2026-08-17
+
+### Changed
+
+- **Pyodide wheel is now installable by name from PyPI** (the playground
+  Packages tab): the release pipeline publishes the pyodide wheel with its
+  native PEP 783 tag `pyemscripten_2026_0_wasm32` (pyodide 314.0.3 = ABI
+  2026_0 / Emscripten 5.0.3), which both PyPI and micropip 0.11.1 accept —
+  so `micropip.install("attributedict")` resolves it directly. The
+  `emscripten_5_0_3_wasm32` variant is still produced and shipped as a GitHub
+  Release asset for direct-URL installs.
+
 ## [0.2.8] - 2026-08-17
 
 ### Changed
