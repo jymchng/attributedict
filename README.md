@@ -1,9 +1,3 @@
-<p align="center">
- <a href="https://github.com/jymchng/attributedict">
- <img src="https://raw.githubusercontent.com/jymchng/attributedict/main/docs/assets/logo.png" alt="attributedict" width="120">
- </a>
-</p>
-
 <h1 align="center">attributedict</h1>
 
 <p align="center">

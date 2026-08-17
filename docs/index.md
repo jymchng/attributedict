@@ -1,7 +1,5 @@
 # attributedict
 
-![attributedict logo](assets/logo.png){ width="160" }
-
 **dict semantics with attribute access.**
 
 `attributedict` is a production-quality **CPython C extension** implementing

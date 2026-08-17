@@ -1,6 +1,2 @@
 /* Small docs-site customizations for attributedict */
 
-/* Center the homepage hero logo */
-.md-typeset img[src$="logo.png"] {
-    border-radius: 8px;
-}
