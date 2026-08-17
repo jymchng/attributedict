@@ -30,7 +30,7 @@ isn't one; bump by tagging.
  on PyPI by other authors).
 2. On PyPI → "Your account" → "Publishing", add a publishing source:
  - **Platform**: GitHub
- - **Owner**: `jymchng`
+ - **Owner**: `OWNER`
  - **Repository**: `attributedict`
  - **Workflow**: `release.yml`
  - **Environment**: `release`

@@ -83,8 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   image renders on the PyPI project page (Warehouse does not resolve
   relative README image paths).
 - README now prominently links the documentation site
-  (`https://jymchng.github.io/attributedict/`) and the repository
-  (`https://github.com/jymchng/attributedict`) near the top.
+  (`https://OWNER.github.io/attributedict/`) and the repository
+  (`https://github.com/OWNER/attributedict`) near the top.
 
 ## [0.2.0] - 2026-08-15
 
@@ -99,7 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Windows AMD64/ARM64/x86; full matrix built on tag/release, cheap subset
   on PRs.
 - MkDocs + Material documentation site deployed to GitHub Pages
-  (`https://jymchng.github.io/attributedict/`), project logo, and a
+  (`https://OWNER.github.io/attributedict/`), project logo, and a
   FastAPI-style README.
 
 ### Changed

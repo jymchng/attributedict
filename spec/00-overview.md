@@ -54,7 +54,7 @@ PyPy/other interpreters, publishing automation.
 - D-008 Benchmarks documented.
 - D-009 cibuildwheel abi3 manylinux+macOS+Windows.
 - D-010 Python 3.9–3.14.
-- D-011 Private repo `jymchng/attributedict` via github-tools MCP.
+- D-011 Private repo `OWNER/attributedict` via github-tools MCP.
 
 ## Acceptance Criteria
 

@@ -4,7 +4,7 @@
 
 If you discover a security issue in `attributedict`, please **do not** open
 a public issue. Contact the maintainers privately via GitHub's security
-advisory workflow or email `jimchng@hotmail.com`.
+advisory workflow.
 
 Please include:
 

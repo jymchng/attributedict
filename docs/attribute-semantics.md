@@ -70,7 +70,7 @@ above).
 
 ## Why "type attributes win"?
 
-See the [decisions](https://github.com/jymchng/attributedict/blob/main/spec/decisions.md)
+See the [decisions](https://github.com/OWNER/attributedict/blob/main/spec/decisions.md)
  and the [FAQ](faq.md). Short version: real `dict` attributes
 (methods/descriptors) win on the attribute path, so `d.items` reads as a
 method exactly like it does on a plain `dict`, while mapping access still

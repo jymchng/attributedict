@@ -3,9 +3,9 @@ site_name: attributedict
 site_description: >-
   A production-quality CPython C extension implementing an AttributeDict —
   dict semantics with attribute access (d["host"] == d.host).
-site_url: https://jymchng.github.io/attributedict/
-repo_url: https://github.com/jymchng/attributedict
-repo_name: jymchng/attributedict
+site_url: https://OWNER.github.io/attributedict/
+repo_url: https://github.com/OWNER/attributedict
+repo_name: OWNER/attributedict
 edit_uri: ""
 
 theme:

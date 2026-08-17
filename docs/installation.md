@@ -20,7 +20,7 @@ projects, so this distribution uses `py-attributedict` instead.
 ## From source
 
 ```bash
-git clone https://github.com/jymchng/attributedict.git
+git clone https://github.com/OWNER/attributedict.git
 cd attributedict
 pip install.
 ```

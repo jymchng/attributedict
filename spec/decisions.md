@@ -22,7 +22,7 @@ requirements-interrogation answers.
 - D-009 **Wheels**: cibuildwheel abi3, manylinux + macOS + Windows.
   (User-selected.)
 - D-010 **Python range**: 3.9–3.14. (User-selected.)
-- D-011 **GitHub**: private repo `jymchng/attributedict` via github-tools MCP.
+- D-011 **GitHub**: private repo `OWNER/attributedict` via github-tools MCP.
   (User-selected.)
 - D-012 **Build backend**: setuptools (PKG-002). Rationale: simple, mature
   abi3 support for one small C extension; scikit-build-core rejected as
