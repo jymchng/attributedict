@@ -68,4 +68,10 @@ issue with a minimal repro.
 ## Not supported in v1
 
 - PyPy and free-threaded CPython 3.13t (see [installation.md](installation.md)).
-- YAML/dataclass/pydantic interop (use `dict(d)` to convert).
+
+Interop with dataclasses / pydantic / SQLAlchemy / TypedDict **is supported**
+(see [compatibility.md](compatibility.md)); the main caveats are that
+pydantic and SQLAlchemy JSON normalize an AttributeDict to a plain `dict`
+(subtype/attribute sugar lost at the boundary — use `dict(d)` to hand off,
+and re-wrap with `AttributeDict(...)` if you need the sugar back), and that
+methods named like keys shadow the attribute path (use `d["key"]`).

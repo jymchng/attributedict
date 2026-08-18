@@ -36,7 +36,10 @@ empty instance.
 
 ## JSON / YAML / dataclasses
 
-Not part of v1. Want JSON? Just convert to a plain dict first:
+Interop with dataclasses / pydantic / SQLAlchemy / TypedDict **is supported**
+(see [compatibility.md](compatibility.md)); the caveat is that those layers
+normalize an AttributeDict to a plain `dict`. For JSON, converting to a
+plain dict first remains the cleanest path:
 
 ```python
 import json

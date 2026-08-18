@@ -63,17 +63,21 @@ security, memory, packaging, and documentation) were delivered and verified.
 
 **Rejected / deferred (documented):**
 - PyPI publishing — deferred (no publishing credentials by design).
-- YAML/dataclass/pydantic interop — out of v1 scope.
 - Free-threaded CPython 3.13t and PyPy — unsupported in v1;
  documented in docs/compatibility.md.
 - Weakref support — matches dict (dict has none).
+
+Note: dataclass/pydantic/SQLAlchemy/TypedDict interop was initially marked
+"out of v1 scope"; it is now **empirically validated as supported** (with
+documented caveats — see [docs/compatibility.md](compatibility.md)).
 
 ## 3. Assumptions
 
 All eight recorded assumptions held during implementation and remain valid:
 package/import/repo name `attributedict`; repr format; recursive conversion;
-keys win; unhashable; no free-threaded support; wheel matrix; no
-YAML/dataclass interop.
+keys win; unhashable; no free-threaded support; wheel matrix; dataclass /
+pydantic / SQLAlchemy / TypedDict interop works with documented caveats
+(see [docs/compatibility.md](compatibility.md)).
 
 ## 4. Known Limitations & Technical Debt
 
